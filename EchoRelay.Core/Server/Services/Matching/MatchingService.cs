@@ -271,7 +271,7 @@ namespace EchoRelay.Core.Server.Services.Matching
                     channel: matchingSession.Channel,
                     locked: false,
                     lobbyTypes: matchingSession.SearchLobbyTypes,
-                    unfilledServerOnly: false,
+                    unfilledServerOnly: true,
                     includeUnverified: includeUnverifiedServers
                 );
 
