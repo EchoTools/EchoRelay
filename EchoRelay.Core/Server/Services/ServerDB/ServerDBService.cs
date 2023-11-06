@@ -90,13 +90,22 @@ namespace EchoRelay.Core.Server.Services.ServerDB
             // Validate the API key if we enforce one.
             if (Server.Settings.ServerDBApiKey != null && apiKey != Server.Settings.ServerDBApiKey)
             {
-                await sender.Send(new LobbyRegistrationFailure(LobbyRegistrationFailure.FailureCode.DatabaseError));
-                return;
-            }
+                if (apiKey != null || !Server.Settings.ServerDBAllowUnverifiedServers)
+                {
+                    await sender.Send(new LobbyRegistrationFailure(LobbyRegistrationFailure.FailureCode.DatabaseError));
+                    return;
+                }
 
-            // Register the game server and update our session data with it.
-            RegisteredGameServer registeredGameServer = Registry.RegisterGameServer(sender, request);
-            sender.SetSessionData(registeredGameServer);
+                // Register the game server and update our session data with it.
+                RegisteredGameServer registeredGameServer = Registry.RegisterGameServer(sender, request, false);
+                sender.SetSessionData(registeredGameServer);
+            }
+            else
+            {
+                // Register the game server and update our session data with it.
+                RegisteredGameServer registeredGameServer = Registry.RegisterGameServer(sender, request, true);
+                sender.SetSessionData(registeredGameServer);
+            }
 
             // Send our registration success message.
             await sender.Send(new LobbyRegistrationSuccess(request.ServerId, sender.Address));

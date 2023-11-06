@@ -5,6 +5,8 @@ using EchoRelay.Core.Server.Messages.Matching;
 using EchoRelay.Core.Server.Services.ServerDB;
 using EchoRelay.Core.Server.Storage.Types;
 using EchoRelay.Core.Utils;
+using System.Collections.Specialized;
+using System.Web;
 using static EchoRelay.Core.Server.Messages.ServerDB.ERGameServerStartSession;
 
 namespace EchoRelay.Core.Server.Services.Matching
@@ -162,6 +164,9 @@ namespace EchoRelay.Core.Server.Services.Matching
                 return;
             }
 
+            NameValueCollection queryStrings = HttpUtility.ParseQueryString(sender.RequestUri.Query);
+            bool includeUnverifiedServers = queryStrings.Get("unverifiedservers") == "true";
+
             // This is a create lobby, or find lobby request. We will try to find an existing server that matches the request.
             // Filter game servers, produce ping request endpoint data.
             // We limit the amount to 100, to avoid the response hitting the max packet size.
@@ -173,7 +178,8 @@ namespace EchoRelay.Core.Server.Services.Matching
                 channel: matchingSession.Channel,
                 locked: false,
                 lobbyTypes: matchingSession.SearchLobbyTypes,
-                unfilledServerOnly: true
+                unfilledServerOnly: true,
+                includeUnverified: includeUnverifiedServers
             );
 
             // If we only have one game server, immediately connect the peer. Otherwise, perform a ping request to determine the lowest ping server.
@@ -193,7 +199,7 @@ namespace EchoRelay.Core.Server.Services.Matching
                         gameServer.InternalAddress,
                         gameServer.ExternalAddress,
                         gameServer.Port
-                        );
+                    );
                 }
 
                 // Send a ping request to the peer.
@@ -232,6 +238,9 @@ namespace EchoRelay.Core.Server.Services.Matching
             // Try to select a game server
             RegisteredGameServer? selectedGameServer = null;
 
+            NameValueCollection queryStrings = HttpUtility.ParseQueryString(sender.RequestUri.Query);
+            bool includeUnverifiedServers = queryStrings.Get("unverifiedservers") == "true";
+
             // If we have no results, there are likely no game servers available to serve the request.
             // See if the user specified that they wish to force users in this scenario to join any available server.
             if (request.Results.Length == 0)
@@ -239,9 +248,9 @@ namespace EchoRelay.Core.Server.Services.Matching
                 if (Server.Settings.ForceIntoAnySessionIfCreationFails)
                 {
                     // Resolve the most populated available game server with open space and select it.
-                    selectedGameServer = Server.ServerDBService.Registry.FilterGameServers(locked: false, unfilledServerOnly: true, lobbyTypes: new LobbyType[] {LobbyType.Unassigned, LobbyType.Public})
+                    selectedGameServer = Server.ServerDBService.Registry.FilterGameServers(locked: false, unfilledServerOnly: true, lobbyTypes: new LobbyType[] { LobbyType.Unassigned, LobbyType.Public }, includeUnverified: includeUnverifiedServers)
                         .MaxBy(x => (float)x.SessionPlayerCount / x.SessionPlayerLimit);
-                } 
+                }
                 else
                 {
                     await SendLobbySessionFailure(sender, LobbySessionFailureErrorCode.ServerFindFailed, "Could not receive a ping response from any game servers");
@@ -262,9 +271,10 @@ namespace EchoRelay.Core.Server.Services.Matching
                     channel: matchingSession.Channel,
                     locked: false,
                     lobbyTypes: matchingSession.SearchLobbyTypes,
-                    unfilledServerOnly: true
+                    unfilledServerOnly: false,
+                    includeUnverified: includeUnverifiedServers
                 );
-                
+
                 // All servers should either have no session started, or match the criteria we filtered for.
                 // Depending on our matching strategy, we will first sort by population or ping, followed by the latter.
                 // The most optimal game server will be selected.
@@ -272,11 +282,12 @@ namespace EchoRelay.Core.Server.Services.Matching
                 {
                     // Select the game server which is most full.
                     selectedGameServer = gameServers.MaxBy(x => (float)x.SessionPlayerCount / x.SessionPlayerLimit);
-                } 
+                }
                 else
                 {
                     // Sort the game servers with preference of filters: session started, lowest ping, highest player count.
-                    var sortedGameServers = gameServers.Select(gameServer => {
+                    var sortedGameServers = gameServers.Select(gameServer =>
+                    {
                         uint? pingMilliseconds = pingResultLookup.TryGetValue((gameServer.InternalAddress.ToUInt32(), gameServer.ExternalAddress.ToUInt32()), out uint p) ? p : uint.MaxValue;
                         return (gameServer, pingMilliseconds);
                     }).OrderBy(x => x.gameServer.SessionStarted ? 0 : 1).ThenBy(x => x.pingMilliseconds).ThenBy(x => (float)x.gameServer.SessionPlayerCount / x.gameServer.SessionPlayerLimit);

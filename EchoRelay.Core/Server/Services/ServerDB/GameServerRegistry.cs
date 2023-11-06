@@ -38,10 +38,10 @@ namespace EchoRelay.Core.Server.Services.ServerDB
         #endregion
 
         #region Functions
-        public RegisteredGameServer RegisterGameServer(Peer peer, ERGameServerRegistrationRequest request)
+        public RegisteredGameServer RegisterGameServer(Peer peer, ERGameServerRegistrationRequest request, bool verified)
         {
             // Create a new registered server and set it in our lookup.
-            RegisteredGameServer registeredGameServer = new RegisteredGameServer(this, peer, request);
+            RegisteredGameServer registeredGameServer = new RegisteredGameServer(this, peer, request, verified);
             RegisteredGameServers[registeredGameServer.ServerId] = registeredGameServer;
 
             // Fire the relevant event for the game server being registered.
@@ -77,7 +77,7 @@ namespace EchoRelay.Core.Server.Services.ServerDB
 
         public IEnumerable<RegisteredGameServer> FilterGameServers(int? findMax = null, ulong? serverId = null, Guid? sessionId = null,
             HashSet<(uint InternalAddr, uint ExternalAddr)>? addresses = null, ushort? port = null,
-            long? gameTypeSymbol = null, long? levelSymbol = null, Guid? channel = null, bool? locked = null, LobbyType[]? lobbyTypes = null, bool unfilledServerOnly = true)
+            long? gameTypeSymbol = null, long? levelSymbol = null, Guid? channel = null, bool? locked = null, LobbyType[]? lobbyTypes = null, bool unfilledServerOnly = true, bool includeUnverified = false)
         {
             // Filter through all game servers
             List<RegisteredGameServer> filteredGameServers = new List<RegisteredGameServer>();
@@ -93,6 +93,8 @@ namespace EchoRelay.Core.Server.Services.ServerDB
                 else if (addresses != null && !addresses.Contains((gameServer.InternalAddress.ToUInt32(), gameServer.ExternalAddress.ToUInt32())))
                     continue;
                 else if (port != null && gameServer.Peer.Port != port)
+                    continue;
+                else if (!includeUnverified && !gameServer.Verified)
                     continue;
 
                 // If the session is started, filter on that criteria.

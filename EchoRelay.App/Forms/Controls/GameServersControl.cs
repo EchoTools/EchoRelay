@@ -34,7 +34,7 @@ namespace EchoRelay.App.Forms.Controls
             if (!_items.TryGetValue(gameServer.ServerId, out listItem))
             {
                 listItem = new ListViewItem();
-                for (int i = 0; i < 9; i++)
+                for (int i = 0; i < 10; i++)
                     listItem.SubItems.Add("");
                 listGameServers.Items.Add(listItem);
                 _items[gameServer.ServerId] = listItem;
@@ -65,6 +65,7 @@ namespace EchoRelay.App.Forms.Controls
             listItem.SubItems[7].Text = gameServer.SessionLocked.ToString();
             listItem.SubItems[8].Text = gameServer.SessionChannel?.ToString() ?? "-";
             listItem.SubItems[9].Text = gameServer.SessionId?.ToString() ?? "-";
+            listItem.SubItems[10].Text = gameServer.Verified.ToString();
             listItem.Tag = gameServer;
 
             // Update the selected item

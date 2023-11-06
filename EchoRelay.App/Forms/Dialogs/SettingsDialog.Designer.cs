@@ -50,6 +50,7 @@
             btnRegenerateAPIKey = new Button();
             txtServerDBApiKey = new TextBox();
             chkUseServerDBApiKeys = new CheckBox();
+            chkAllowUnverifiedServers = new CheckBox();
             groupBoxGame.SuspendLayout();
             groupBoxServer.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)numericTCPPort).BeginInit();
@@ -213,7 +214,7 @@
             // btnSaveSettings
             // 
             btnSaveSettings.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            btnSaveSettings.Location = new Point(12, 378);
+            btnSaveSettings.Location = new Point(12, 391);
             btnSaveSettings.Name = "btnSaveSettings";
             btnSaveSettings.Size = new Size(500, 23);
             btnSaveSettings.TabIndex = 6;
@@ -226,7 +227,7 @@
             groupBoxMatching.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             groupBoxMatching.Controls.Add(chkForceIntoAnySession);
             groupBoxMatching.Controls.Add(chkPopulationOverPing);
-            groupBoxMatching.Location = new Point(12, 293);
+            groupBoxMatching.Location = new Point(12, 305);
             groupBoxMatching.Name = "groupBoxMatching";
             groupBoxMatching.Size = new Size(500, 79);
             groupBoxMatching.TabIndex = 7;
@@ -260,12 +261,13 @@
             // groupBox1
             // 
             groupBox1.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            groupBox1.Controls.Add(chkAllowUnverifiedServers);
             groupBox1.Controls.Add(btnRegenerateAPIKey);
             groupBox1.Controls.Add(txtServerDBApiKey);
             groupBox1.Controls.Add(chkUseServerDBApiKeys);
             groupBox1.Location = new Point(12, 222);
             groupBox1.Name = "groupBox1";
-            groupBox1.Size = new Size(500, 65);
+            groupBox1.Size = new Size(500, 76);
             groupBox1.TabIndex = 8;
             groupBox1.TabStop = false;
             groupBox1.Text = "ServerDB Settings";
@@ -303,11 +305,21 @@
             chkUseServerDBApiKeys.UseVisualStyleBackColor = true;
             chkUseServerDBApiKeys.CheckedChanged += chkUseServerDBApiKeys_CheckedChanged;
             // 
+            // chkAllowUnverifiedServers
+            // 
+            chkAllowUnverifiedServers.AutoSize = true;
+            chkAllowUnverifiedServers.Location = new Point(6, 47);
+            chkAllowUnverifiedServers.Name = "chkAllowUnverifiedServers";
+            chkAllowUnverifiedServers.Size = new Size(153, 19);
+            chkAllowUnverifiedServers.TabIndex = 11;
+            chkAllowUnverifiedServers.Text = "Allow Unverified Servers";
+            chkAllowUnverifiedServers.UseVisualStyleBackColor = true;
+            // 
             // SettingsDialog
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(524, 409);
+            ClientSize = new Size(524, 422);
             Controls.Add(groupBox1);
             Controls.Add(groupBoxMatching);
             Controls.Add(btnSaveSettings);
@@ -352,5 +364,6 @@
         private TextBox txtServerDBApiKey;
         private CheckBox chkUseServerDBApiKeys;
         private Button btnRegenerateAPIKey;
+        private CheckBox chkAllowUnverifiedServers;
     }
 }

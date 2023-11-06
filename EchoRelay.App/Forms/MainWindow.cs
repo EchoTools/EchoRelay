@@ -103,10 +103,11 @@ namespace EchoRelay
             // Create a server instance and set up our event handlers
             Server = new Server(serverStorage,
                 new ServerSettings(
-                    port: Settings.Port,
-                    serverDbApiKey: Settings.ServerDBApiKey,
-                    favorPopulationOverPing: Settings.MatchingPopulationOverPing,
-                    forceIntoAnySessionIfCreationFails: Settings.MatchingForceIntoAnySessionOnFailure
+                        port: Settings.Port,
+                        serverDbApiKey: Settings.ServerDBApiKey,
+                        serverDbAllowUnverifiedServers: Settings.ServerDBAllowUnverifiedServers,
+                        favorPopulationOverPing: Settings.MatchingPopulationOverPing,
+                        forceIntoAnySessionIfCreationFails: Settings.MatchingForceIntoAnySessionOnFailure
                     )
                 );
             Server.OnServerStarted += Server_OnServerStarted;
