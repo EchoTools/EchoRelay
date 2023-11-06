@@ -9,6 +9,7 @@ using System.Collections.Specialized;
 using System.Net;
 using System.Security.Cryptography;
 using System.Web;
+using Newtonsoft.Json;
 
 namespace EchoRelay.Core.Server.Services.Login
 {
@@ -129,6 +130,105 @@ namespace EchoRelay.Core.Server.Services.Login
                     case UserServerProfileUpdateRequest userServerProfileUpdateRequest:
                         await ProcessUserServerProfileUpdateRequest(sender, userServerProfileUpdateRequest);
                         break;
+
+                    // Big dumb idea, please stop and reflect upon your life choices before continuing
+                    case RemoteLogSetv3 remoteLogSetv3:
+                        await ProcessRemoteLogSetv3(sender, remoteLogSetv3);
+                        break;
+                }
+            }
+        }
+
+        private async Task ProcessRemoteLogSetv3(Peer sender, RemoteLogSetv3 request)
+        {
+            AccountResource? account = Storage.Accounts.Get(request.UserId);
+            if (account == null)
+            {
+                return;
+            }
+
+            foreach (string log in request.Logs)
+            {
+                try
+                {
+                    dynamic? logJson = JsonConvert.DeserializeObject(log);
+
+                    if (logJson == null) continue;
+                    if (logJson["message"] != "CUSTOMIZATION_METRICS_PAYLOAD") continue;
+                    if (logJson["[event_type]"] != "item_equipped") continue;
+                    if (logJson["[item_name]"] == null) continue;
+                    string itemName = logJson["[item_name]"].ToString();
+
+                    var regex1 = new System.Text.RegularExpressions.Regex(@"^(.*?)_.*$");
+                    var regex2 = new System.Text.RegularExpressions.Regex(@"^rwd_(.*?)_.*$");
+                    var match1 = regex1.Match(itemName);
+                    var match2 = regex2.Match(itemName);
+
+                    string itemType = match1.Groups[1].Value;
+                    if (match2.Groups.Count > 1)
+                    {
+                        itemType = match2.Groups[1].Value;
+                    }
+
+                    if (account.Profile.Server.Loadout?.Instances?.Unified?.Slots == null) continue;
+                    switch (itemType)
+                    {
+                        case "emote":
+                            account.Profile.Server.Loadout.Instances.Unified.Slots.Emote = itemName;
+                            account.Profile.Server.Loadout.Instances.Unified.Slots.SecondEmote = itemName;
+                            break;
+                        case "decal":
+                            account.Profile.Server.Loadout.Instances.Unified.Slots.Decal = itemName;
+                            account.Profile.Server.Loadout.Instances.Unified.Slots.DecalBody = itemName;
+                            break;
+                        case "tint":
+                            account.Profile.Server.Loadout.Instances.Unified.Slots.Tint = itemName;
+                            account.Profile.Server.Loadout.Instances.Unified.Slots.TintBody = itemName;
+                            account.Profile.Server.Loadout.Instances.Unified.Slots.TintAlignmentA = itemName;
+                            account.Profile.Server.Loadout.Instances.Unified.Slots.TintAlignmentB = itemName;
+                            break;
+                        case "pattern":
+                            account.Profile.Server.Loadout.Instances.Unified.Slots.Pattern = itemName;
+                            account.Profile.Server.Loadout.Instances.Unified.Slots.PatternBody = itemName;
+                            break;
+                        case "decalback":
+                            account.Profile.Server.Loadout.Instances.Unified.Slots.Pip = itemName;
+                            break;
+                        case "chassis":
+                            account.Profile.Server.Loadout.Instances.Unified.Slots.Chassis = itemName;
+                            break;
+                        case "bracer":
+                            account.Profile.Server.Loadout.Instances.Unified.Slots.Bracer = itemName;
+                            break;
+                        case "booster":
+                            account.Profile.Server.Loadout.Instances.Unified.Slots.Booster = itemName;
+                            break;
+                        case "title":
+                            account.Profile.Server.Loadout.Instances.Unified.Slots.Title = itemName;
+                            break;
+                        case "tag":
+                            account.Profile.Server.Loadout.Instances.Unified.Slots.Tag = itemName;
+                            break;
+                        case "banner":
+                            account.Profile.Server.Loadout.Instances.Unified.Slots.Banner = itemName;
+                            break;
+                        case "medal":
+                            account.Profile.Server.Loadout.Instances.Unified.Slots.Medal = itemName;
+                            break;
+                        case "goal":
+                            account.Profile.Server.Loadout.Instances.Unified.Slots.GoalFX = itemName;
+                            break;
+                        case "emissive":
+                            account.Profile.Server.Loadout.Instances.Unified.Slots.Emissive = itemName;
+                            break;
+                        default:
+                            break;
+                    }
+
+                    Storage.Accounts.Set(account);
+                }
+                catch (Exception e)
+                {
                 }
             }
         }
@@ -146,7 +246,7 @@ namespace EchoRelay.Core.Server.Services.Login
             InvalidatePeerUserSession(sender);
 
             // Validate the user identifier
-            if(!request.UserId.Valid())
+            if (!request.UserId.Valid())
             {
                 await sender.Send(new LoginFailure(request.UserId, HttpStatusCode.BadRequest, "User identifier invalid"));
                 return;
@@ -174,7 +274,7 @@ namespace EchoRelay.Core.Server.Services.Login
                 // Create an account for this user id. We use the platform identifier string as the display name.
                 account = new AccountResource(request.UserId, displayName, true, true, false);
                 account.Profile.Server.CreateTime = currentTimestamp;
-            } 
+            }
             else
             {
                 // Real authentication can't be performed here against Oculus API. We are given an Oculus access token and nonce from client.
@@ -192,7 +292,7 @@ namespace EchoRelay.Core.Server.Services.Login
 
             // Authenticate to the account. If this is the first time an authentication lock/password
             // was provided, it will be set for future authentication.
-            if(!account.Authenticate(authPassword))
+            if (!account.Authenticate(authPassword))
             {
                 await sender.Send(new LoginFailure(request.UserId, HttpStatusCode.BadRequest, $"Invalid account password/authentication lock"));
                 return;
