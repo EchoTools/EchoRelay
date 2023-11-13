@@ -125,6 +125,8 @@ namespace EchoRelay.Core.Server.Storage
         }
         protected abstract void CloseInternal();
         public abstract K[] Keys();
+
+        public abstract V[] Values();
         public abstract bool Exists(K key);
         public V? Get(K key)
         {

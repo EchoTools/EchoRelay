@@ -1,12 +1,16 @@
 ﻿using CommandLine;
+using EchoRelay.Cli.Utils;
 using EchoRelay.Core.Server;
 using EchoRelay.Core.Server.Messages;
 using EchoRelay.Core.Server.Services;
 using EchoRelay.Core.Server.Storage;
 using EchoRelay.Core.Server.Storage.Filesystem;
+using EchoRelay.Core.Server.Storage.Types;
 using EchoRelay.Core.Utils;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using System.Net;
 using System.Reflection;
 
 namespace EchoRelay.Cli
@@ -33,6 +37,8 @@ namespace EchoRelay.Cli
         /// A mutex lock object to be used when printing to console, to avoid color collisions.
         /// </summary>
         private static object _printLock = new object();
+
+        public static ServerStorage? serverStorage = null;
 
         /// <summary>
         /// The CLI argument options for the application.
@@ -72,8 +78,11 @@ namespace EchoRelay.Cli
             [Option('v', "verbose", Required = false, Default = false, HelpText = "Verbose output for every message sent between clients and servers.")]
             public bool Verbose { get; set; } = true;
 
+            [Option("HTTPEnabled", Required = false, Default = true, HelpText = "Turn on the HTTP API")]
+            public bool HTTPEnabled { get; set; } = true;
+
             [Option("httpport", Required = false, Default = 8443, HelpText = "HTTP Port for the HTTP API")]
-            public bool HTTPPort { get; set; } = true;
+            public int HTTPPort { get; set; }
         }
 
         /// <summary>
@@ -103,7 +112,7 @@ namespace EchoRelay.Cli
                 }
 
                 // Create our file system storage and open it.
-                ServerStorage serverStorage = new FilesystemServerStorage(options.DatabaseFolder);
+                serverStorage = new FilesystemServerStorage(options.DatabaseFolder);
                 serverStorage.Open();
 
                 // Check if initial deployment needs to be performed.
@@ -156,11 +165,13 @@ namespace EchoRelay.Cli
                     Server.OnServicePacketReceived += Server_OnServicePacketReceived;
                 }
 
-                // Create new HTTP API Task.
-                Task HTTPServer = Task.Run(() => Server_StartHTTPAPI());
-
-                // Start the HTTP API.
-                HTTPServer.Wait();
+                if (options.HTTPEnabled)
+                {
+                    // Create new HTTP API Task.
+                    Task HTTPServer = Task.Run(() => Server_StartHTTPAPI());
+                    // Start the HTTP API.
+                    HTTPServer.Wait();
+                }
 
                 // Start the server.
                 Server.Start().Wait();
@@ -169,7 +180,73 @@ namespace EchoRelay.Cli
 
         private static void Server_StartHTTPAPI()
         {
+            Info("[HTTPSERVER] Starting HTTP API");
+            using var listener = new HttpListener();
+            listener.Prefixes.Add($"http://0.0.0.0:{Options?.HTTPPort}/");
 
+            listener.Start();
+
+            Console.WriteLine($" {Options?.HTTPPort}...");
+            Info($"[HTTPSERVER] Successfully started HTTP API on port {Options?.HTTPPort}!");
+
+            while (true)
+            {
+                HttpListenerContext ctx = listener.GetContext();
+                HttpListenerRequest req = ctx.Request;
+
+                string? path = ctx.Request.Url?.LocalPath;
+
+                if (path != null && path.StartsWith("/ban") && req.HttpMethod == "POST" && req.ContentType == "application/x-www-form-urlencoded")
+                {
+                    AccountResource account = AccountUtils.GetAccount(GetFormDataValue(req, "username"));
+                    TimeSpan time = GetFromTimeFrameString(GetFormDataValue(req, "time"));
+                    if(AccountUtils.Ban(account, time))
+                    {
+
+                    }
+                }
+                else
+                {
+                    Info($"Request for {path} couldn't be completed since there's literally nothing to do with it.");
+                }
+            }
+        }
+
+        public static TimeSpan GetFromTimeFrameString(string timeFrameString)
+        {
+            var period = int.Parse(timeFrameString.Remove(timeFrameString.Length - 1, 1));
+            var timeType = timeFrameString.Substring(timeFrameString.Length - 1, 1);
+
+            return timeType switch
+            {
+                "h" => TimeSpan.FromHours(period),
+                "d" => TimeSpan.FromDays(period),
+                "m" => TimeSpan.FromDays(period * 30),
+                _ => throw new Exception("No possible time frame given! Possible time frames = h (hours), d (days), m (months)")
+            };
+        }
+
+        static string GetFormDataValue(HttpListenerRequest request, string key)
+        {
+            using (Stream body = request.InputStream)
+            {
+                using (StreamReader reader = new StreamReader(body, request.ContentEncoding))
+                {
+                    string formData = reader.ReadToEnd();
+                    var formDataPairs = formData.Split('&');
+
+                    foreach (var pair in formDataPairs)
+                    {
+                        var keyValue = pair.Split('=');
+                        if (keyValue.Length == 2 && keyValue[0] == key)
+                        {
+                            return Uri.UnescapeDataString(keyValue[1]);
+                        }
+                    }
+                }
+            }
+
+            return string.Empty;
         }
 
         private static void Server_OnServerStarted(Server server)
@@ -283,7 +360,7 @@ namespace EchoRelay.Cli
         }
 
 
-        private static void Error(string msg)
+        public static void Error(string msg)
         {
             lock (_printLock)
             {
@@ -293,7 +370,7 @@ namespace EchoRelay.Cli
             }
         }
 
-        private static void Warning(string msg)
+        public static void Warning(string msg)
         {
             lock (_printLock)
             {
@@ -302,7 +379,7 @@ namespace EchoRelay.Cli
                 Console.ResetColor();
             }
         }
-        private static void Info(string msg)
+        public static void Info(string msg)
         {
             lock (_printLock)
             {
@@ -311,7 +388,7 @@ namespace EchoRelay.Cli
             }
         }
 
-        private static void Debug(string msg)
+        public static void Debug(string msg)
         {
             lock (_printLock)
             {
