@@ -8,6 +8,7 @@ using EchoRelay.Core.Utils;
 using Microsoft.AspNetCore.Components.Web;
 using Newtonsoft.Json;
 using System.Reflection;
+using System.Runtime.InteropServices;
 
 namespace EchoRelay.Cli
 {
@@ -33,6 +34,22 @@ namespace EchoRelay.Cli
         /// A mutex lock object to be used when printing to console, to avoid color collisions.
         /// </summary>
         private static object _printLock = new object();
+        
+        [DllImport("Kernel32")]
+        private static extern bool SetConsoleCtrlHandler(EventHandler handler, bool add);
+
+        private delegate bool EventHandler(CtrlType sig);
+        private static EventHandler consoleCloseHandler;
+
+        // Enum to represent different CtrlTypes
+        private enum CtrlType
+        {
+            CTRL_C_EVENT = 0,
+            CTRL_BREAK_EVENT = 1,
+            CTRL_CLOSE_EVENT = 2,
+            CTRL_LOGOFF_EVENT = 5,
+            CTRL_SHUTDOWN_EVENT = 6
+        }
 
         /// <summary>
         /// The CLI argument options for the application.
@@ -146,6 +163,20 @@ namespace EchoRelay.Cli
                 Server.ServerDBService.Registry.OnGameServerUnregistered += Registry_OnGameServerUnregistered;
                 Server.ServerDBService.OnGameServerRegistrationFailure += ServerDBService_OnGameServerRegistrationFailure;
 
+                Server.OnServerStarted += Server_OnServerStarted;
+                Server.OnServerStopped += Server_OnServerStopped;
+                Server.OnAuthorizationResult += Server_OnAuthorizationResult;
+                Server.OnServicePeerConnected += Server_OnServicePeerConnected;
+                Server.OnServicePeerDisconnected += Server_OnServicePeerDisconnected;
+                Server.OnServicePeerAuthenticated += Server_OnServicePeerAuthenticated;
+                Server.ServerDBService.Registry.OnGameServerRegistered += Registry_OnGameServerRegistered;
+                Server.ServerDBService.Registry.OnGameServerUnregistered += Registry_OnGameServerUnregistered;
+                Server.ServerDBService.OnGameServerRegistrationFailure += ServerDBService_OnGameServerRegistrationFailure;
+                
+                // Set up the event handler for the console close event
+                consoleCloseHandler += new EventHandler(ConsoleCloseHandler);
+                SetConsoleCtrlHandler(consoleCloseHandler, true);
+                
                 // Set up all verbose event handlers.
                 if (options.Verbose)
                 {
@@ -305,6 +336,18 @@ namespace EchoRelay.Cli
                 Console.WriteLine(msg);
                 Console.ResetColor();
             }
+        }
+        
+        // Handler for the console close event
+        private static bool ConsoleCloseHandler(CtrlType sig)
+        {
+            Console.WriteLine("Console is closing. Performing cleanup...");
+            Server.Stop(); // Assuming Server.Stop() is your cleanup function
+    
+            Thread.Sleep(1500);
+            
+            // Allow the program to exit
+            return true;
         }
     }
 }

@@ -13,6 +13,7 @@ using EchoRelay.Core.Utils;
 using System.Collections.ObjectModel;
 using System.Net;
 using System.Net.WebSockets;
+using EchoRelay.Core.Monitoring;
 using static EchoRelay.Core.Server.Services.Service;
 
 namespace EchoRelay.Core.Server
@@ -36,6 +37,11 @@ namespace EchoRelay.Core.Server
         /// The settings for the server to operate under.
         /// </summary>
         public ServerSettings Settings { get; private set; }
+        /// <summary>
+        /// The API manager for monitoring
+        /// </summary>
+        public ApiManager? apiManager { get; private set; }
+        
         /// <summary>
         /// The persistent storage layer for the server.
         /// </summary>
@@ -174,6 +180,8 @@ namespace EchoRelay.Core.Server
                 { Settings.ServerDBServicePath.ToLower(), ServerDBService },
                 { Settings.TransactionServicePath.ToLower(), TransactionService },
             }.AsReadOnly();
+            
+            apiManager = new ApiManager();
         }
         #endregion
 
@@ -291,14 +299,26 @@ namespace EchoRelay.Core.Server
 
             // Fire our stopped event
             OnServerStopped?.Invoke(this);
+            
+            ServerObject server = new ServerObject();
+            ServiceConfig serviceConfig = Settings.GenerateServiceConfig(PublicIPAddress?.ToString() ?? "localhost");
+            server.apiservice_host = serviceConfig.ApiServiceHost;
+            server.loginservice_host = serviceConfig.LoginServiceHost;
+            server.configservice_host = serviceConfig.ConfigServiceHost;
+            server.matchingservice_host = serviceConfig.MatchingServiceHost;
+            server.serverdb_host = serviceConfig.ServerDBServiceHost;
+            server.transactionservice_host = serviceConfig.TransactionServiceHost;
+            server.ip = PublicIPAddress.ToString();
+            await apiManager.Server.AddServerAsync(server);
         }
 
         /// <summary>
         /// Stops the server and its underlying services.
         /// Note: Servers are run in another task. This method may return before the server has stopped.
         /// </summary>
-        public void Stop()
+        public async void Stop()
         {
+            await apiManager.Server.DeleteServerAsync(PublicIPAddress.ToString());
             // Cancel any cancellation token we have now.
             _cancellationTokenSource?.Cancel();
         }

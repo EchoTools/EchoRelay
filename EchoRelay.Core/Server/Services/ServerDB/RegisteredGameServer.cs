@@ -7,6 +7,7 @@ using System.Collections.Concurrent;
 using System.Net;
 using System.Reflection;
 using System.Security.Cryptography;
+using EchoRelay.Core.Monitoring;
 
 namespace EchoRelay.Core.Server.Services.ServerDB
 {
@@ -22,6 +23,8 @@ namespace EchoRelay.Core.Server.Services.ServerDB
         /// The parent <see cref="GameServerRegistry"/> which the <see cref="RegisteredGameServer"/> is registered to.
         /// </summary>
         private GameServerRegistry Registry { get; }
+        
+        public ApiManager ApiManager { get; }
 
         /// <summary>
         /// The registration request provided by the game server initially.
@@ -203,6 +206,7 @@ namespace EchoRelay.Core.Server.Services.ServerDB
             SessionPlayerLimits = GameTypePlayerLimits.DefaultLimits;
             _playerSessions = new Dictionary<Guid, (Peer, TeamIndex)>();
             _accessLock = new AsyncLock();
+            ApiManager = new ApiManager();
         }
         #endregion
 
@@ -288,6 +292,16 @@ namespace EchoRelay.Core.Server.Services.ServerDB
             // Send the start session message to the game server.
             await Peer.Send(new ERGameServerStartSession(SessionId.Value, SessionChannel.Value, (byte)SessionPlayerLimits.TotalPlayerLimit, SessionLobbyType, mergedSessionSettings, entrantDescriptors.ToArray()));
 
+            GameServerObject gameServerObject = new GameServerObject();
+            gameServerObject.serverIP = Server.PublicIPAddress.ToString();
+            gameServerObject.region = RegionSymbol.ToString();
+            gameServerObject.sessionID = SessionId.ToString();
+            gameServerObject.gameMode = SessionGameTypeSymbol.ToString();
+            gameServerObject.@public = SessionLobbyType == ERGameServerStartSession.LobbyType.Public;
+            gameServerObject.type = SessionLevelSymbol.ToString();
+            gameServerObject.playerCount = SessionPlayerCount;
+            await ApiManager.GameServer.AddGameServerAsync(gameServerObject);
+            
             // Add the new session id to the parent registry's lookup.
             Registry.RegisteredGameServersBySessionId[SessionId.Value] = this;
         }
@@ -512,7 +526,18 @@ namespace EchoRelay.Core.Server.Services.ServerDB
 
             // Fire the event for players being added
             if(addedPlayersInfo.Length > 0)
+            {
                 OnPlayersAdded?.Invoke(this, addedPlayersInfo);
+                GameServerObject gameServerObject = new GameServerObject();
+                gameServerObject.serverIP = Server.PublicIPAddress.ToString();
+                gameServerObject.region = RegionSymbol.ToString();
+                gameServerObject.sessionID = SessionId.ToString();
+                gameServerObject.gameMode = SessionGameTypeSymbol.ToString();
+                gameServerObject.@public = SessionLobbyType == ERGameServerStartSession.LobbyType.Public;
+                gameServerObject.type = SessionLevelSymbol.ToString();
+                gameServerObject.playerCount = SessionPlayerCount;
+                await ApiManager.GameServer.EditGameServer(gameServerObject, SessionId.ToString());
+            }
         }
 
         public async Task KickPlayer(Guid playerSession)
@@ -545,10 +570,13 @@ namespace EchoRelay.Core.Server.Services.ServerDB
 
             // Fire the event for a player being removed
             OnPlayerRemoved?.Invoke(this, playerSession, peer);
+            await ApiManager.GameServer.DeleteGameServerAsync(SessionId.ToString());
         }
 
         public async Task EndSession()
         {
+            await ApiManager.GameServer.DeleteGameServerAsync(SessionId.ToString());
+
             // Lock throughout this method.
             await _accessLock.ExecuteLocked(() => {
                 // Reset all variables

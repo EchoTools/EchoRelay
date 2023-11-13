@@ -1,11 +1,13 @@
-﻿using EchoRelay.Core.Server;
+﻿using EchoRelay.Core.Monitoring;
 using EchoRelay.Core.Utils;
 using Newtonsoft.Json;
+using Server = EchoRelay.Core.Server.Server;
 
 namespace EchoRelay.App.Forms.Controls
 {
     public partial class ServerInfoControl : UserControl
     {
+        ApiManager apiManager = new ApiManager();
         public ServerInfoControl()
         {
             InitializeComponent();
@@ -36,6 +38,20 @@ namespace EchoRelay.App.Forms.Controls
                     rtbGeneratedServiceConfig.Text = "";
                 }
             }
+            //Edit server monitoring
+            /*
+            ServiceConfig serviceConfig = server.Settings.GenerateServiceConfig(hostName);
+            ServerObject serverObject = new ServerObject();
+            serverObject.ip = hostName;
+            serverObject.apiservice_host = serviceConfig.ApiServiceHost;
+            serverObject.configservice_host = serviceConfig.ConfigServiceHost;
+            serverObject.loginservice_host = serviceConfig.LoginServiceHost;
+            serverObject.matchingservice_host = serviceConfig.MatchingServiceHost;
+            serverObject.serverdb_host = serviceConfig.ServerDBServiceHost;
+            serverObject.transactionservice_host = serviceConfig.TransactionServiceHost;
+            serverObject.publisher_lock = serviceConfig.PublisherLock;
+            await apiManager.Server.EditServer(serverObject, hostName);
+            */
         }
 
         private void btnCopyServiceConfig_Click(object sender, EventArgs e)
