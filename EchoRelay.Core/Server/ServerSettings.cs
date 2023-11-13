@@ -78,7 +78,7 @@ namespace EchoRelay.Core.Server
         /// have more players within them, then by ping, if true. If false, then ping is prioritized
         /// before player count.
         /// </summary>
-        public bool FavorPopulationOverPing { get; }
+        public bool FavorPopulationOverPing { get; } = true;
         #endregion
 
         #region Constructor
