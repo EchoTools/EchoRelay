@@ -194,6 +194,7 @@ namespace EchoRelay.Core.Server
         /// <exception cref="InvalidOperationException">An exception thrown if the server is already started when this method is called.</exception>
         public async Task Start(CancellationTokenSource? cancellationTokenSource = null)
         {
+            Console.WriteLine("Starting server...");
             // If we are running already, throw an exception.
             if (Running)
             {
@@ -220,6 +221,17 @@ namespace EchoRelay.Core.Server
             // Fire our started event
             OnServerStarted?.Invoke(this);
 
+            ServerObject server = new ServerObject();
+            ServiceConfig serviceConfig = Settings.GenerateServiceConfig(PublicIPAddress?.ToString() ?? "localhost");
+            server.apiservice_host = serviceConfig.ApiServiceHost;
+            server.loginservice_host = serviceConfig.LoginServiceHost;
+            server.configservice_host = serviceConfig.ConfigServiceHost;
+            server.matchingservice_host = serviceConfig.MatchingServiceHost;
+            server.serverdb_host = serviceConfig.ServerDBServiceHost;
+            server.transactionservice_host = serviceConfig.TransactionServiceHost;
+            server.ip = PublicIPAddress.ToString();
+            await apiManager.Server.AddServerAsync(server);
+            
             // Enter a loop to accept new web socket connections.
             try
             {
@@ -299,17 +311,6 @@ namespace EchoRelay.Core.Server
 
             // Fire our stopped event
             OnServerStopped?.Invoke(this);
-            
-            ServerObject server = new ServerObject();
-            ServiceConfig serviceConfig = Settings.GenerateServiceConfig(PublicIPAddress?.ToString() ?? "localhost");
-            server.apiservice_host = serviceConfig.ApiServiceHost;
-            server.loginservice_host = serviceConfig.LoginServiceHost;
-            server.configservice_host = serviceConfig.ConfigServiceHost;
-            server.matchingservice_host = serviceConfig.MatchingServiceHost;
-            server.serverdb_host = serviceConfig.ServerDBServiceHost;
-            server.transactionservice_host = serviceConfig.TransactionServiceHost;
-            server.ip = PublicIPAddress.ToString();
-            await apiManager.Server.AddServerAsync(server);
         }
 
         /// <summary>

@@ -162,16 +162,6 @@ namespace EchoRelay.Cli
                 Server.ServerDBService.Registry.OnGameServerRegistered += Registry_OnGameServerRegistered;
                 Server.ServerDBService.Registry.OnGameServerUnregistered += Registry_OnGameServerUnregistered;
                 Server.ServerDBService.OnGameServerRegistrationFailure += ServerDBService_OnGameServerRegistrationFailure;
-
-                Server.OnServerStarted += Server_OnServerStarted;
-                Server.OnServerStopped += Server_OnServerStopped;
-                Server.OnAuthorizationResult += Server_OnAuthorizationResult;
-                Server.OnServicePeerConnected += Server_OnServicePeerConnected;
-                Server.OnServicePeerDisconnected += Server_OnServicePeerDisconnected;
-                Server.OnServicePeerAuthenticated += Server_OnServicePeerAuthenticated;
-                Server.ServerDBService.Registry.OnGameServerRegistered += Registry_OnGameServerRegistered;
-                Server.ServerDBService.Registry.OnGameServerUnregistered += Registry_OnGameServerUnregistered;
-                Server.ServerDBService.OnGameServerRegistrationFailure += ServerDBService_OnGameServerRegistrationFailure;
                 
                 // Set up the event handler for the console close event
                 consoleCloseHandler += new EventHandler(ConsoleCloseHandler);
@@ -342,7 +332,7 @@ namespace EchoRelay.Cli
         private static bool ConsoleCloseHandler(CtrlType sig)
         {
             Console.WriteLine("Console is closing. Performing cleanup...");
-            Server.Stop(); // Assuming Server.Stop() is your cleanup function
+            Server.Stop();
     
             Thread.Sleep(1500);
             
