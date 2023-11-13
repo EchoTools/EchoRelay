@@ -9,6 +9,8 @@ using Microsoft.AspNetCore.Components.Web;
 using Newtonsoft.Json;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using EchoRelay.Core.Monitoring;
+using Server = EchoRelay.Core.Server.Server;
 
 namespace EchoRelay.Cli
 {
@@ -26,6 +28,8 @@ namespace EchoRelay.Cli
         /// The update timer used to trigger a peer stats update on a given interval.
         /// </summary>
         private static System.Timers.Timer? peerStatsUpdateTimer;
+
+        private static ApiManager apiManager;
         /// <summary>
         /// The time that the server was started.
         /// </summary>
@@ -167,6 +171,8 @@ namespace EchoRelay.Cli
                 consoleCloseHandler += new EventHandler(ConsoleCloseHandler);
                 SetConsoleCtrlHandler(consoleCloseHandler, true);
                 
+                apiManager = new ApiManager();
+                
                 // Set up all verbose event handlers.
                 if (options.Verbose)
                 {
@@ -214,14 +220,14 @@ namespace EchoRelay.Cli
         private static void PeerStatsUpdateTimer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e)
         {
             Info($"[PEERSTATS] " +
-                $"elapsed: {(DateTime.UtcNow - startedTime)}, " +
-                $"gameservers: {Server.ServerDBService.Registry.RegisteredGameServers.Count}, " +
-                $"login: {Server.LoginService.Peers.Count}, " +
-                $"config: {Server.ConfigService.Peers.Count}, " +
-                $"matching: {Server.MatchingService.Peers.Count}, " +
-                $"serverdb: {Server.ServerDBService.Peers.Count}, " +
-                $"transaction: {Server.TransactionService.Peers.Count}"
-                );
+                 $"elapsed: {(DateTime.UtcNow - startedTime)}, " +
+                 $"gameservers: {Server.ServerDBService.Registry.RegisteredGameServers.Count}, " +
+                 $"login: {Server.LoginService.Peers.Count}, " +
+                 $"config: {Server.ConfigService.Peers.Count}, " +
+                 $"matching: {Server.MatchingService.Peers.Count}, " +
+                 $"serverdb: {Server.ServerDBService.Peers.Count}, " +
+                 $"transaction: {Server.TransactionService.Peers.Count}"
+            );
         }
 
         private static void Server_OnServerStopped(Server server)
@@ -238,13 +244,28 @@ namespace EchoRelay.Cli
             if(!authorized)
                 Error($"[SERVER] client({client.Address}:{client.Port}) failed authorization");
         }
+
+        private static void updateServerInfo()
+        {
+            apiManager.peerStatsObject.serverIP = Server.PublicIPAddress?.ToString() ?? "localhost";
+            apiManager.peerStatsObject.login = Server.LoginService.Peers.Count;
+            apiManager.peerStatsObject.matching = Server.MatchingService.Peers.Count;
+            apiManager.peerStatsObject.config = Server.ConfigService.Peers.Count;
+            apiManager.peerStatsObject.transaction = Server.TransactionService.Peers.Count;
+            apiManager.peerStatsObject.serverdb = Server.ServerDBService.Peers.Count;
+            apiManager.peerStatsObject.gameServers = Server.ServerDBService.Registry.RegisteredGameServers.Count;
+            
+            apiManager.PeerStats.EditPeerStats(apiManager.peerStatsObject, apiManager.peerStatsObject.serverIP);
+        }
         private static void Server_OnServicePeerConnected(Core.Server.Services.Service service, Core.Server.Services.Peer peer)
         {
             Info($"[{service.Name}] client({peer.Address}:{peer.Port}) connected");
+            updateServerInfo();
         }
         private static void Server_OnServicePeerDisconnected(Core.Server.Services.Service service, Core.Server.Services.Peer peer)
         {
             Info($"[{service.Name}] client({peer.Address}:{peer.Port}) disconnected");
+            updateServerInfo();
         }
         private static void Server_OnServicePeerAuthenticated(Core.Server.Services.Service service, Core.Server.Services.Peer peer, Core.Game.XPlatformId userId)
         {

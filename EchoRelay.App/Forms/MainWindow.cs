@@ -13,6 +13,8 @@ using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using EchoRelay.Core.Monitoring;
+using Server = EchoRelay.Core.Server.Server;
 
 namespace EchoRelay
 {
@@ -36,6 +38,8 @@ namespace EchoRelay
         /// The websocket server used to power central game services.
         /// </summary>
         public Server Server { get; set; }
+        
+        public ApiManager apiManager { get; set; }
 
         /// <summary>
         /// The UI editors for different storage resources.
@@ -130,6 +134,8 @@ namespace EchoRelay
             Server.ServerDBService.Registry.OnGameServerRegistered += Registry_OnGameServerRegistered;
             Server.ServerDBService.Registry.OnGameServerUnregistered += Registry_OnGameServerUnregistered;
             Server.ServerDBService.OnGameServerRegistrationFailure += ServerDBService_OnGameServerRegistrationFailure; ;
+
+            apiManager = new ApiManager();
         }
         #endregion
 
@@ -359,6 +365,9 @@ namespace EchoRelay
 
                 // Update server count on the game server tab.
                 tabGameServers.Text = $"Game Servers ({gameServersControl.GameServerCount})";
+
+                apiManager.peerStatsObject.gameServers = gameServersControl.GameServerCount;
+                apiManager.PeerStats.EditPeerStats(apiManager.peerStatsObject, Server.PublicIPAddress.ToString());
 
                 AppendLogText($"[{gameServer.Peer.Service.Name}] client({gameServer.Peer.Address}:{gameServer.Peer.Port}) registered game server (server_id={gameServer.ServerId}, region_symbol={gameServer.RegionSymbol}, version_lock={gameServer.VersionLock}, endpoint=<{gameServer.ExternalAddress}:{gameServer.Port}>)\n");
             });

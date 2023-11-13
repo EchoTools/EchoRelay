@@ -44,11 +44,11 @@ public class GameServer
         }
     }
     
-    public async Task EditGameServer(GameServerObject jsonObject, string sessionId)
+    public async Task EditGameServer(GameServerObject jsonObject, string gameServerID)
     {
         // Create a StringContent with the JSON data and set the content type
         string jsonData = JsonConvert.SerializeObject(jsonObject);
-        string endpoint = $"editGameServer/{sessionId}";
+        string endpoint = $"updateGameServer/{gameServerID}";
 
         try
         {

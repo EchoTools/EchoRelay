@@ -48,7 +48,7 @@ public class Server
     {
         // Create a StringContent with the JSON data and set the content type
         string jsonData = JsonConvert.SerializeObject(jsonObject);
-        string endpoint = $"editServer/{server}";
+        string endpoint = $"updateServer/{server}";
 
         try
         {

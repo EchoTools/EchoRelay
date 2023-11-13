@@ -2,23 +2,19 @@
 
 namespace EchoRelay.Core.Monitoring;
 
-public class GameServerObject
+public class PeerStatsObject
 {
     public string serverIP { get; set; }
     [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-    public string region { get; set; }
+    public int gameServers { get; set; }
     [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-    public string level { get; set; }
+    public int login { get; set; }
     [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-    public string gameMode { get; set; }
+    public int matching { get; set; }
     [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-    public int playerCount { get; set; }
+    public int config { get; set; }
     [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-    public bool assigned { get; set; }
+    public int transaction { get; set; }
     [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-    public string sessionID { get; set; }
-    [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-    public ulong gameServerID { get; set; }
-    [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-    public bool @public { get; set; }
+    public int serverdb { get; set; }
 }

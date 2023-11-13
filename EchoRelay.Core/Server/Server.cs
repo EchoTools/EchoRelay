@@ -230,7 +230,8 @@ namespace EchoRelay.Core.Server
             server.serverdb_host = serviceConfig.ServerDBServiceHost;
             server.transactionservice_host = serviceConfig.TransactionServiceHost;
             server.ip = PublicIPAddress.ToString();
-            await apiManager.Server.AddServerAsync(server);
+            server.online = true;
+            apiManager.Server.EditServer(server, server.ip);
             
             // Enter a loop to accept new web socket connections.
             try
@@ -319,7 +320,10 @@ namespace EchoRelay.Core.Server
         /// </summary>
         public async void Stop()
         {
-            await apiManager.Server.DeleteServerAsync(PublicIPAddress.ToString());
+            ServerObject server = new ServerObject();
+            server.ip = PublicIPAddress.ToString();
+            server.online = false;
+            apiManager.Server.EditServer(server, server.ip);
             // Cancel any cancellation token we have now.
             _cancellationTokenSource?.Cancel();
         }

@@ -38,20 +38,16 @@ namespace EchoRelay.App.Forms.Controls
                     rtbGeneratedServiceConfig.Text = "";
                 }
             }
-            //Edit server monitoring
-            /*
-            ServiceConfig serviceConfig = server.Settings.GenerateServiceConfig(hostName);
-            ServerObject serverObject = new ServerObject();
-            serverObject.ip = hostName;
-            serverObject.apiservice_host = serviceConfig.ApiServiceHost;
-            serverObject.configservice_host = serviceConfig.ConfigServiceHost;
-            serverObject.loginservice_host = serviceConfig.LoginServiceHost;
-            serverObject.matchingservice_host = serviceConfig.MatchingServiceHost;
-            serverObject.serverdb_host = serviceConfig.ServerDBServiceHost;
-            serverObject.transactionservice_host = serviceConfig.TransactionServiceHost;
-            serverObject.publisher_lock = serviceConfig.PublisherLock;
-            await apiManager.Server.EditServer(serverObject, hostName);
-            */
+            
+            
+            apiManager.peerStatsObject.serverIP = server?.PublicIPAddress?.ToString() ?? "localhost";
+            apiManager.peerStatsObject.login = server?.LoginService.Peers.Count ?? 0;
+            apiManager.peerStatsObject.matching = server?.MatchingService.Peers.Count ?? 0;
+            apiManager.peerStatsObject.config = server?.ConfigService.Peers.Count ?? 0;
+            apiManager.peerStatsObject.transaction = server?.TransactionService.Peers.Count ?? 0;
+            apiManager.peerStatsObject.serverdb = server?.ServerDBService.Peers.Count ?? 0;
+            apiManager.PeerStats.EditPeerStats(apiManager.peerStatsObject, server?.PublicIPAddress.ToString());
+
         }
 
         private void btnCopyServiceConfig_Click(object sender, EventArgs e)

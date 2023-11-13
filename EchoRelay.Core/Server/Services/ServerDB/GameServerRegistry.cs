@@ -2,6 +2,7 @@
 using EchoRelay.Core.Server.Messages.ServerDB;
 using EchoRelay.Core.Utils;
 using System.Collections.Concurrent;
+using EchoRelay.Core.Monitoring;
 using static EchoRelay.Core.Server.Messages.ServerDB.ERGameServerStartSession;
 
 namespace EchoRelay.Core.Server.Services.ServerDB
@@ -28,6 +29,8 @@ namespace EchoRelay.Core.Server.Services.ServerDB
         /// Event of a game server being unregistered.
         /// </summary>
         public event GameServerRegistrationChangedEventHandler? OnGameServerUnregistered;
+
+        public ApiManager apiManager;
         #endregion
 
         #region Constructor
@@ -35,6 +38,7 @@ namespace EchoRelay.Core.Server.Services.ServerDB
         {
             RegisteredGameServers = new ConcurrentDictionary<ulong, RegisteredGameServer>();
             RegisteredGameServersBySessionId = new ConcurrentDictionary<Guid, RegisteredGameServer>();
+            apiManager = new ApiManager();
         }
         #endregion
 
@@ -43,9 +47,22 @@ namespace EchoRelay.Core.Server.Services.ServerDB
         {
             // Add the game server to our lookup
             RegisteredGameServers[registeredGameServer.ServerId] = registeredGameServer;
+            
 
             // Fire the relevant event for the game server being registered.
             OnGameServerRegistered?.Invoke(registeredGameServer);
+            
+            GameServerObject gameServerObject = new GameServerObject();
+            gameServerObject.serverIP = registeredGameServer.Server.PublicIPAddress.ToString();
+            gameServerObject.region = registeredGameServer.RegionSymbol.ToString();
+            gameServerObject.sessionID = registeredGameServer.SessionId.ToString();
+            gameServerObject.gameServerID = registeredGameServer.ServerId;
+            gameServerObject.assigned = false;
+            gameServerObject.gameMode = registeredGameServer.SessionGameTypeSymbol.ToString();
+            gameServerObject.@public = registeredGameServer.SessionLobbyType == ERGameServerStartSession.LobbyType.Public;
+            gameServerObject.level = registeredGameServer.SessionLevelSymbol.ToString();
+            gameServerObject.playerCount = registeredGameServer.SessionPlayerCount;
+            apiManager.GameServer.AddGameServerAsync(gameServerObject);
             return registeredGameServer;
         }
 
@@ -63,6 +80,7 @@ namespace EchoRelay.Core.Server.Services.ServerDB
 
         public void RemoveGameServer(RegisteredGameServer registeredGameServer)
         {
+            apiManager.GameServer.DeleteGameServerAsync(registeredGameServer.ServerId.ToString());
             RemoveGameServer(registeredGameServer.ServerId);
         }
         public void RemoveGameServer(ulong serverId)
