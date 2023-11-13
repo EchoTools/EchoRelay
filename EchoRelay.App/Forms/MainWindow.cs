@@ -135,7 +135,7 @@ namespace EchoRelay
             Server.ServerDBService.Registry.OnGameServerUnregistered += Registry_OnGameServerUnregistered;
             Server.ServerDBService.OnGameServerRegistrationFailure += ServerDBService_OnGameServerRegistrationFailure; ;
 
-            apiManager = new ApiManager();
+            apiManager = ApiManager.Instance;
         }
         #endregion
 

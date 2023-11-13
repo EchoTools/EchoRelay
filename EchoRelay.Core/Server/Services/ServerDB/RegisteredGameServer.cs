@@ -24,7 +24,7 @@ namespace EchoRelay.Core.Server.Services.ServerDB
         /// </summary>
         private GameServerRegistry Registry { get; }
         
-        public ApiManager ApiManager { get; }
+        public ApiManager apiManager { get; }
 
         /// <summary>
         /// The registration request provided by the game server initially.
@@ -206,7 +206,7 @@ namespace EchoRelay.Core.Server.Services.ServerDB
             SessionPlayerLimits = GameTypePlayerLimits.DefaultLimits;
             _playerSessions = new Dictionary<Guid, (Peer, TeamIndex)>();
             _accessLock = new AsyncLock();
-            ApiManager = new ApiManager();
+            apiManager = ApiManager.Instance;
         }
         #endregion
 
@@ -294,15 +294,15 @@ namespace EchoRelay.Core.Server.Services.ServerDB
 
             GameServerObject gameServerObject = new GameServerObject();
             gameServerObject.serverIP = Server.PublicIPAddress.ToString();
-            gameServerObject.region = RegionSymbol.ToString();
+            gameServerObject.region = Server.SymbolCache.GetName(RegionSymbol);;
             gameServerObject.sessionID = SessionId.ToString();
             gameServerObject.assigned = true;
             gameServerObject.gameServerID = ServerId;
-            gameServerObject.gameMode = SessionGameTypeSymbol.ToString();
+            gameServerObject.gameMode = Server.SymbolCache.GetName(SessionGameTypeSymbol.Value);
             gameServerObject.@public = SessionLobbyType == ERGameServerStartSession.LobbyType.Public;
-            gameServerObject.level = SessionLevelSymbol.ToString();
+            gameServerObject.level = Server.SymbolCache.GetName(SessionLevelSymbol.Value);
             gameServerObject.playerCount = SessionPlayerCount;
-            ApiManager.GameServer.EditGameServer(gameServerObject, ServerId.ToString());
+            apiManager.GameServer.EditGameServer(gameServerObject, ServerId.ToString());
             
             // Add the new session id to the parent registry's lookup.
             Registry.RegisteredGameServersBySessionId[SessionId.Value] = this;
@@ -532,15 +532,9 @@ namespace EchoRelay.Core.Server.Services.ServerDB
                 OnPlayersAdded?.Invoke(this, addedPlayersInfo);
                 GameServerObject gameServerObject = new GameServerObject();
                 gameServerObject.serverIP = Server.PublicIPAddress.ToString();
-                gameServerObject.region = RegionSymbol.ToString();
-                gameServerObject.sessionID = SessionId.ToString();
                 gameServerObject.assigned = true;
-                gameServerObject.gameServerID = ServerId;
-                gameServerObject.gameMode = SessionGameTypeSymbol.ToString();
-                gameServerObject.@public = SessionLobbyType == ERGameServerStartSession.LobbyType.Public;
-                gameServerObject.level = SessionLevelSymbol.ToString();
                 gameServerObject.playerCount = SessionPlayerCount;
-                ApiManager.GameServer.EditGameServer(gameServerObject, ServerId.ToString());
+                apiManager.GameServer.EditGameServer(gameServerObject, ServerId.ToString());
             }
         }
 
@@ -576,15 +570,9 @@ namespace EchoRelay.Core.Server.Services.ServerDB
             OnPlayerRemoved?.Invoke(this, playerSession, peer); 
             GameServerObject gameServerObject = new GameServerObject();
             gameServerObject.serverIP = Server.PublicIPAddress.ToString();
-            gameServerObject.region = RegionSymbol.ToString();
-            gameServerObject.sessionID = SessionId.ToString();
             gameServerObject.assigned = true;
-            gameServerObject.gameServerID = ServerId;
-            gameServerObject.gameMode = SessionGameTypeSymbol.ToString();
-            gameServerObject.@public = SessionLobbyType == ERGameServerStartSession.LobbyType.Public;
-            gameServerObject.level = SessionLevelSymbol.ToString();
             gameServerObject.playerCount = SessionPlayerCount;
-            ApiManager.GameServer.EditGameServer(gameServerObject, ServerId.ToString());
+            apiManager.GameServer.EditGameServer(gameServerObject, ServerId.ToString());
         }
 
         public async Task EndSession()
@@ -618,7 +606,7 @@ namespace EchoRelay.Core.Server.Services.ServerDB
             gameServerObject.level = "";
             gameServerObject.playerCount = SessionPlayerCount;
             
-            ApiManager.GameServer.EditGameServer(gameServerObject, ServerId.ToString());
+            apiManager.GameServer.EditGameServer(gameServerObject, ServerId.ToString());
 
         }
         #endregion

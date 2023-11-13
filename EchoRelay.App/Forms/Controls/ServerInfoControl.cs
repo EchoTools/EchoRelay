@@ -7,7 +7,7 @@ namespace EchoRelay.App.Forms.Controls
 {
     public partial class ServerInfoControl : UserControl
     {
-        ApiManager apiManager = new ApiManager();
+        ApiManager _apiManager = ApiManager.Instance;
         public ServerInfoControl()
         {
             InitializeComponent();
@@ -40,13 +40,13 @@ namespace EchoRelay.App.Forms.Controls
             }
             
             
-            apiManager.peerStatsObject.serverIP = server?.PublicIPAddress?.ToString() ?? "localhost";
-            apiManager.peerStatsObject.login = server?.LoginService.Peers.Count ?? 0;
-            apiManager.peerStatsObject.matching = server?.MatchingService.Peers.Count ?? 0;
-            apiManager.peerStatsObject.config = server?.ConfigService.Peers.Count ?? 0;
-            apiManager.peerStatsObject.transaction = server?.TransactionService.Peers.Count ?? 0;
-            apiManager.peerStatsObject.serverdb = server?.ServerDBService.Peers.Count ?? 0;
-            apiManager.PeerStats.EditPeerStats(apiManager.peerStatsObject, server?.PublicIPAddress.ToString());
+            _apiManager.peerStatsObject.serverIP = server?.PublicIPAddress?.ToString() ?? "localhost";
+            _apiManager.peerStatsObject.login = server?.LoginService.Peers.Count ?? 0;
+            _apiManager.peerStatsObject.matching = server?.MatchingService.Peers.Count ?? 0;
+            _apiManager.peerStatsObject.config = server?.ConfigService.Peers.Count ?? 0;
+            _apiManager.peerStatsObject.transaction = server?.TransactionService.Peers.Count ?? 0;
+            _apiManager.peerStatsObject.serverdb = server?.ServerDBService.Peers.Count ?? 0;
+            _apiManager.PeerStats.EditPeerStats(_apiManager.peerStatsObject, server?.PublicIPAddress.ToString());
 
         }
 

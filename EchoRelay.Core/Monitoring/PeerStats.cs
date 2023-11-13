@@ -19,7 +19,7 @@ public class PeerStats
 
         try
         {
-            await _apiClient.EncryptAndSendAsync(endpoint, jsonData);
+            await _apiClient.PostMonitoringData(endpoint, jsonData);
             Console.WriteLine($"Peer stats successfully edited in monitoring.");
         }
         catch (Exception ex)

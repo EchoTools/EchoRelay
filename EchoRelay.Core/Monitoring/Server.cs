@@ -18,7 +18,7 @@ public class Server
 
         try
         {
-            await _apiClient.DeleteAsync(endpoint);
+            await _apiClient.DeleteMonitoringData(endpoint);
             Console.WriteLine($"Server {server} deleted successfully from monitoring.");
         }
         catch (Exception ex)
@@ -35,7 +35,7 @@ public class Server
 
         try
         {
-            await _apiClient.EncryptAndSendAsync(endpoint, jsonData);
+            await _apiClient.PostMonitoringData(endpoint, jsonData);
             Console.WriteLine($"Server successfully added to monitoring.");
         }
         catch (Exception ex)
@@ -52,30 +52,12 @@ public class Server
 
         try
         {
-            await _apiClient.EncryptAndSendAsync(endpoint, jsonData);
+            await _apiClient.PostMonitoringData(endpoint, jsonData);
             Console.WriteLine($"Game server successfully edited in monitoring.");
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error editing the game server in monitoring: {ex.Message}");
-        }
-    }
-    
-    public async Task<string> GetServerAsync(string server)
-    {
-        // Define the endpoint for retrieving a game server with the sessionID
-        string endpoint = $"listServers/";
-
-        try
-        {
-            string decryptedData = await _apiClient.ReceiveAndDecryptAsync(endpoint);
-            Console.WriteLine($"Server retrieved successfully from monitoring.");
-            return decryptedData;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error retrieving the server from monitoring: {ex.Message}");
-            return null;
         }
     }
 }

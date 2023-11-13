@@ -171,7 +171,7 @@ namespace EchoRelay.Cli
                 consoleCloseHandler += new EventHandler(ConsoleCloseHandler);
                 SetConsoleCtrlHandler(consoleCloseHandler, true);
                 
-                apiManager = new ApiManager();
+                apiManager = ApiManager.Instance;
                 
                 // Set up all verbose event handlers.
                 if (options.Verbose)

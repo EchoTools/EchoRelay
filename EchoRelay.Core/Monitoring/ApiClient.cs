@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Security.Cryptography;
+using System.Text;
 
 namespace EchoRelay.Core.Monitoring;
     
@@ -15,7 +16,8 @@ public class ApiClient
         };
     }
 
-    public async Task<string> EncryptAndSendAsync(string endpoint, string data)
+    //TODO encrypt data to avoid people to send fake data
+    public async Task<string> PostMonitoringData(string endpoint, string data)
     {
         HttpContent content = new StringContent(data, Encoding.UTF8, "application/json");
         HttpResponseMessage response = await _httpClient.PostAsync(endpoint, content);
@@ -27,7 +29,7 @@ public class ApiClient
             throw new Exception($"API request failed with status code: {response.StatusCode}");
     }
 
-    public async Task DeleteAsync(string endpoint)
+    public async Task DeleteMonitoringData(string endpoint)
     {
         HttpResponseMessage response = await _httpClient.DeleteAsync(endpoint);
 
@@ -36,15 +38,5 @@ public class ApiClient
             throw new Exception($"DELETE request failed with status code: {response.StatusCode}");
         }
     }
-    
-    public async Task<string> ReceiveAndDecryptAsync(string endpoint)
-    {
-        HttpResponseMessage response = await _httpClient.GetAsync(endpoint);
 
-        if (response.IsSuccessStatusCode)
-        {
-            return await response.Content.ReadAsStringAsync();
-        }
-        throw new Exception($"API request failed with status code: {response.StatusCode}");
-    }
 }

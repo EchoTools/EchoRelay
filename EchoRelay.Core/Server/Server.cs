@@ -181,7 +181,8 @@ namespace EchoRelay.Core.Server
                 { Settings.TransactionServicePath.ToLower(), TransactionService },
             }.AsReadOnly();
             
-            apiManager = new ApiManager();
+            apiManager = ApiManager.Instance;
+
         }
         #endregion
 

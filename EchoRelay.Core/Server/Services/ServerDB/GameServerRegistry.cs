@@ -38,7 +38,7 @@ namespace EchoRelay.Core.Server.Services.ServerDB
         {
             RegisteredGameServers = new ConcurrentDictionary<ulong, RegisteredGameServer>();
             RegisteredGameServersBySessionId = new ConcurrentDictionary<Guid, RegisteredGameServer>();
-            apiManager = new ApiManager();
+            apiManager = ApiManager.Instance;
         }
         #endregion
 
