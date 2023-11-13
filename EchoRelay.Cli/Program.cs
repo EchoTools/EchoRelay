@@ -198,16 +198,21 @@ namespace EchoRelay.Cli
 
                 if (path != null && path.StartsWith("/ban") && req.HttpMethod == "POST" && req.ContentType == "application/x-www-form-urlencoded")
                 {
-                    AccountResource account = AccountUtils.GetAccount(GetFormDataValue(req, "username"));
-                    TimeSpan time = GetFromTimeFrameString(GetFormDataValue(req, "time"));
-                    if(AccountUtils.Ban(account, time))
-                    {
+                    string username = GetFormDataValue(req, "username");
 
-                    }
+                    AccountResource account = AccountUtils.GetAccount(username);
+                    TimeSpan time = GetFromTimeFrameString(GetFormDataValue(req, "time"));
+
+                    bool banSuccess = AccountUtils.Ban(account, time);
+                    string jsonResponse = banSuccess
+                        ? "{\"error\": null, \"success\": true}"
+                        : "{\"error\": \"Ban was unsuccessful\", \"success\": false}";
+
+                    SendJsonResponse(ctx.Response, jsonResponse);
                 }
                 else
                 {
-                    Info($"Request for {path} couldn't be completed since there's literally nothing to do with it.");
+                    Info($"Request for '{path}' couldn't be completed since there's literally nothing to do with it.");
                 }
             }
         }
@@ -247,6 +252,14 @@ namespace EchoRelay.Cli
             }
 
             return string.Empty;
+        }
+        static void SendJsonResponse(HttpListenerResponse response, string jsonResponse)
+        {
+            response.ContentType = "application/json";
+            byte[] buffer = System.Text.Encoding.UTF8.GetBytes(jsonResponse);
+            response.ContentLength64 = buffer.Length;
+            response.OutputStream.Write(buffer, 0, buffer.Length);
+            response.Close();
         }
 
         private static void Server_OnServerStarted(Server server)
