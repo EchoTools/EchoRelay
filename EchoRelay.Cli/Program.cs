@@ -71,6 +71,9 @@ namespace EchoRelay.Cli
 
             [Option('v', "verbose", Required = false, Default = false, HelpText = "Verbose output for every message sent between clients and servers.")]
             public bool Verbose { get; set; } = true;
+
+            [Option("httpport", Required = false, Default = 8443, HelpText = "HTTP Port for the HTTP API")]
+            public bool HTTPPort { get; set; } = true;
         }
 
         /// <summary>
@@ -153,9 +156,20 @@ namespace EchoRelay.Cli
                     Server.OnServicePacketReceived += Server_OnServicePacketReceived;
                 }
 
+                // Create new HTTP API Task.
+                Task HTTPServer = Task.Run(() => Server_StartHTTPAPI());
+
+                // Start the HTTP API.
+                HTTPServer.Wait();
+
                 // Start the server.
                 Server.Start().Wait();
             });
+        }
+
+        private static void Server_StartHTTPAPI()
+        {
+
         }
 
         private static void Server_OnServerStarted(Server server)
