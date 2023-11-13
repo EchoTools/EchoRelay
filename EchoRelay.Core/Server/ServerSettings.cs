@@ -111,15 +111,19 @@ namespace EchoRelay.Core.Server
         /// <param name="address">The address or domain to use for the base URL for all host endpoints.</param>
         /// <param name="serverConfig">Indicates whether sensitive gameserver-only fields should be included in the config.</param>
         /// <param name="publisherLock">The publisher/environment lock to generate with.</param>
+        /// <param name="apiKey">Used to generate a config without API key</param>
+
         /// <returns>Returns the generated <see cref="ServiceConfig"/>.</returns>
-        public ServiceConfig GenerateServiceConfig(string address, bool serverConfig = true, string publisherLock = "rad15_live", string? serverPlugin = null)
+        public ServiceConfig GenerateServiceConfig(string address, bool serverConfig = true, string publisherLock = "rad15_live", string? serverPlugin = null, bool? apiKey = null)
         {
             // Obtain our base host
             string webSocketHost = $"ws://{address}:{Port}";
             string httpHost = $"http://{address}:{Port}";
+            string serverDBHostNoKey;
 
             // Construct our ServerDB path
             string serverDBHost = webSocketHost + ServerDBServicePath;
+            serverDBHostNoKey = serverDBHost;
             if (ServerDBApiKey != null)
             {
                 serverDBHost += $"?api_key={HttpUtility.UrlEncode(ServerDBApiKey)}";
@@ -131,7 +135,7 @@ namespace EchoRelay.Core.Server
                 configServiceHost: webSocketHost + ConfigServicePath,
                 loginServiceHost: webSocketHost + LoginServicePath + $"?auth=AccountPassword&displayname=AccountName",
                 matchingServiceHost: webSocketHost + MatchingServicePath,
-                serverdbServiceHost: serverConfig ? serverDBHost : null,
+                serverdbServiceHost: apiKey == null ? (serverConfig ? serverDBHost : null) : serverDBHostNoKey,
                 transactionServiceHost: webSocketHost + TransactionServicePath,
                 publisherLock: publisherLock,
                 serverPlugin: serverPlugin

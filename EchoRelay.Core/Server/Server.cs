@@ -223,7 +223,7 @@ namespace EchoRelay.Core.Server
             OnServerStarted?.Invoke(this);
 
             ServerObject server = new ServerObject();
-            ServiceConfig serviceConfig = Settings.GenerateServiceConfig(PublicIPAddress?.ToString() ?? "localhost");
+            ServiceConfig serviceConfig = Settings.GenerateServiceConfig(PublicIPAddress?.ToString() ?? "localhost", apiKey:false);
             server.ApiServiceHost = serviceConfig.ApiServiceHost;
             server.LoginServiceHost = serviceConfig.LoginServiceHost;
             server.ConfigServiceHost = serviceConfig.ConfigServiceHost;
@@ -324,7 +324,15 @@ namespace EchoRelay.Core.Server
             ServerObject server = new ServerObject();
             server.Ip = PublicIPAddress?.ToString() ?? "localhost";
             server.Online = false;
-            _ = Task.Run(() => apiManager?.Server.EditServer(server, server.Ip));            
+            _ = Task.Run(() => apiManager?.Server.EditServer(server, server.Ip));  
+            apiManager.peerStatsObject.ServerIp = PublicIPAddress?.ToString();
+            apiManager.peerStatsObject.Login = 0;
+            apiManager.peerStatsObject.Matching = 0;
+            apiManager.peerStatsObject.Config = 0;
+            apiManager.peerStatsObject.Transaction = 0;
+            apiManager.peerStatsObject.ServerDb = 0;
+            await apiManager.PeerStats.EditPeerStats(apiManager.peerStatsObject,
+                    PublicIPAddress?.ToString() ?? "localhost");
             // Cancel any cancellation token we have now.
             _cancellationTokenSource?.Cancel();
         }

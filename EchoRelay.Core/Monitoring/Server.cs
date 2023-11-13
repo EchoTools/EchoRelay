@@ -53,7 +53,7 @@ public class Server
         try
         {
             await _apiClient.PostMonitoringData(endpoint, jsonData);
-            Console.WriteLine($"Game server successfully edited in monitoring.");
+            Console.WriteLine($"Server successfully edited in monitoring.");
         }
         catch (Exception ex)
         {

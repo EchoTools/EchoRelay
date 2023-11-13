@@ -54,13 +54,13 @@ namespace EchoRelay.Core.Server.Services.ServerDB
             
             GameServerObject gameServerObject = new GameServerObject();
             gameServerObject.ServerIp = registeredGameServer.Server.PublicIPAddress?.ToString();
-            gameServerObject.Region = registeredGameServer.RegionSymbol.ToString();
+            gameServerObject.Region = "";
             gameServerObject.SessionId = registeredGameServer.SessionId.ToString();
             gameServerObject.GameServerId = registeredGameServer.ServerId;
             gameServerObject.Assigned = false;
-            gameServerObject.GameMode = registeredGameServer.SessionGameTypeSymbol.ToString();
-            gameServerObject.Public = registeredGameServer.SessionLobbyType == ERGameServerStartSession.LobbyType.Public;
-            gameServerObject.Level = registeredGameServer.SessionLevelSymbol.ToString();
+            gameServerObject.GameMode = "";
+            gameServerObject.Public = registeredGameServer.SessionLobbyType == LobbyType.Public;
+            gameServerObject.Level = "";
             gameServerObject.PlayerCount = registeredGameServer.SessionPlayerCount;
             Task.Run(() => apiManager.GameServer.AddGameServerAsync(gameServerObject));
             return registeredGameServer;

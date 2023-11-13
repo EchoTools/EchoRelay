@@ -156,6 +156,8 @@ namespace EchoRelay.Cli
                         )
                     );
 
+                apiManager = ApiManager.Instance;
+                
                 // Set up all event handlers.
                 Server.OnServerStarted += Server_OnServerStarted;
                 Server.OnServerStopped += Server_OnServerStopped;
@@ -170,9 +172,7 @@ namespace EchoRelay.Cli
                 // Set up the event handler for the console close event
                 consoleCloseHandler += new EventHandler(ConsoleCloseHandler);
                 SetConsoleCtrlHandler(consoleCloseHandler, true);
-                
-                apiManager = ApiManager.Instance;
-                
+
                 // Set up all verbose event handlers.
                 if (options.Verbose)
                 {
@@ -210,6 +210,8 @@ namespace EchoRelay.Cli
                 }
             }
 
+            updateServerInfo();
+
             // Start the peer stats update timer
             startedTime = DateTime.UtcNow;
             peerStatsUpdateTimer = new System.Timers.Timer(Options!.StatsUpdateInterval);
@@ -237,6 +239,8 @@ namespace EchoRelay.Cli
 
             // Print our server stopped message
             Info("[SERVER] Server stopped");
+            
+            updateServerInfo();
         }
 
         private static void Server_OnAuthorizationResult(Server server, System.Net.IPEndPoint client, bool authorized)
@@ -254,7 +258,6 @@ namespace EchoRelay.Cli
             apiManager.peerStatsObject.Transaction = Server?.TransactionService.Peers.Count;
             apiManager.peerStatsObject.ServerDb = Server?.ServerDBService.Peers.Count;
             apiManager.peerStatsObject.GameServers = Server?.ServerDBService.Registry.RegisteredGameServers.Count;
-            
             Task.Run(() => apiManager.PeerStats.EditPeerStats(apiManager.peerStatsObject, apiManager.peerStatsObject.ServerIp));
         }
         private static void Server_OnServicePeerConnected(Core.Server.Services.Service service, Core.Server.Services.Peer peer)
@@ -275,11 +278,14 @@ namespace EchoRelay.Cli
         private static void Registry_OnGameServerRegistered(Core.Server.Services.ServerDB.RegisteredGameServer gameServer)
         {
             Info($"[{gameServer.Peer.Service.Name}] client({gameServer.Peer.Address}:{gameServer.Peer.Port}) registered game server (server_id={gameServer.ServerId}, region_symbol={gameServer.RegionSymbol}, version_lock={gameServer.VersionLock}, endpoint=<{gameServer.ExternalAddress}:{gameServer.Port}>)");
+            updateServerInfo();
         }
 
         private static void Registry_OnGameServerUnregistered(Core.Server.Services.ServerDB.RegisteredGameServer gameServer)
         {
             Info($"[{gameServer.Peer.Service.Name}] client({gameServer.Peer.Address}:{gameServer.Peer.Port}) unregistered game server (server_id={gameServer.ServerId}, region_symbol={gameServer.RegionSymbol}, version_lock={gameServer.VersionLock}, endpoint=<{gameServer.ExternalAddress}:{gameServer.Port}>)");
+            updateServerInfo();
+
         }
         private static void ServerDBService_OnGameServerRegistrationFailure(Peer peer, Core.Server.Messages.ServerDB.ERGameServerRegistrationRequest registrationRequest, string failureMessage)
         {

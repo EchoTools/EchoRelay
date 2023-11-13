@@ -294,7 +294,7 @@ namespace EchoRelay.Core.Server.Services.ServerDB
 
             GameServerObject gameServerObject = new GameServerObject();
             gameServerObject.ServerIp = Server.PublicIPAddress?.ToString();
-            gameServerObject.Region = Server.SymbolCache.GetName(RegionSymbol);;
+            gameServerObject.Region = Server.SymbolCache.GetName(RegionSymbol);
             gameServerObject.SessionId = SessionId.ToString();
             gameServerObject.Assigned = true;
             gameServerObject.GameServerId = ServerId;
