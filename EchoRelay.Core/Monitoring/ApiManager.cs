@@ -8,7 +8,7 @@ public class ApiManager
     /// <summary>
     /// Uri to the monitoring API
     /// </summary>
-    public string URI { get; } = "http://localhost:3000/api/";
+    public string URI { get; } = "http://51.75.140.182:3000/api/";
 
     public PeerStatsObject peerStatsObject;
     /// <summary>
