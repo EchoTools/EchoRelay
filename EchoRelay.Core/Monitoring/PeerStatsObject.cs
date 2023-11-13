@@ -4,6 +4,7 @@ namespace EchoRelay.Core.Monitoring;
 
 public class PeerStatsObject
 {
+    [JsonProperty(PropertyName = "serverIP")]
     public string? ServerIp { get; set; }
     [JsonProperty(NullValueHandling = NullValueHandling.Ignore, PropertyName = "gameServers")]
     public int? GameServers { get; set; } = 0;

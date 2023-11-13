@@ -4,24 +4,22 @@ namespace EchoRelay.Core.Monitoring;
 
 public class GameServerObject
 {
-    public string? ServerIp { get; set; }
-
     [JsonProperty(NullValueHandling = NullValueHandling.Ignore, PropertyName = "serverIP")]
-    public string? Region { get; set; }
-
+    public string? ServerIp { get; set; }
     [JsonProperty(NullValueHandling = NullValueHandling.Ignore, PropertyName = "region")]
-    public string? Level { get; set; }
+    public string? Region { get; set; }
     [JsonProperty(NullValueHandling = NullValueHandling.Ignore, PropertyName = "level")]
-    public string? GameMode { get; set; }
+    public string? Level { get; set; }
     [JsonProperty(NullValueHandling = NullValueHandling.Ignore, PropertyName = "gameMode")]
-    public int PlayerCount { get; set; }
+    public string? GameMode { get; set; }
     [JsonProperty(NullValueHandling = NullValueHandling.Ignore, PropertyName = "playerCount")]
-    public bool Assigned { get; set; }
-
+    public int PlayerCount { get; set; }
     [JsonProperty(NullValueHandling = NullValueHandling.Ignore, PropertyName = "assigned")]
-    public string? SessionId { get; set; }
+    public bool Assigned { get; set; }
     [JsonProperty(NullValueHandling = NullValueHandling.Ignore, PropertyName = "sessionID")]
-    public ulong GameServerId { get; set; }
+    public string? SessionId { get; set; }
     [JsonProperty(NullValueHandling = NullValueHandling.Ignore, PropertyName = "gameServerID")]
+    public ulong GameServerId { get; set; }
+    [JsonProperty(NullValueHandling = NullValueHandling.Ignore, PropertyName = "public")]
     public bool @Public { get; set; }
 }
