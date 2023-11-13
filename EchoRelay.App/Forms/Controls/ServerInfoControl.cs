@@ -40,13 +40,13 @@ namespace EchoRelay.App.Forms.Controls
             }
             
             
-            _apiManager.peerStatsObject.serverIP = server?.PublicIPAddress?.ToString() ?? "localhost";
-            _apiManager.peerStatsObject.login = server?.LoginService.Peers.Count ?? 0;
-            _apiManager.peerStatsObject.matching = server?.MatchingService.Peers.Count ?? 0;
-            _apiManager.peerStatsObject.config = server?.ConfigService.Peers.Count ?? 0;
-            _apiManager.peerStatsObject.transaction = server?.TransactionService.Peers.Count ?? 0;
-            _apiManager.peerStatsObject.serverdb = server?.ServerDBService.Peers.Count ?? 0;
-            _apiManager.PeerStats.EditPeerStats(_apiManager.peerStatsObject, server?.PublicIPAddress.ToString());
+            _apiManager.peerStatsObject.ServerIp = server?.PublicIPAddress?.ToString() ?? "localhost";
+            _apiManager.peerStatsObject.Login = server?.LoginService.Peers.Count ?? 0;
+            _apiManager.peerStatsObject.Matching = server?.MatchingService.Peers.Count ?? 0;
+            _apiManager.peerStatsObject.Config = server?.ConfigService.Peers.Count ?? 0;
+            _apiManager.peerStatsObject.Transaction = server?.TransactionService.Peers.Count ?? 0;
+            _apiManager.peerStatsObject.ServerDb = server?.ServerDBService.Peers.Count ?? 0;
+            Task.Run(() => _apiManager.PeerStats.EditPeerStats(_apiManager.peerStatsObject, server?.PublicIPAddress?.ToString() ?? "localhost"));
 
         }
 

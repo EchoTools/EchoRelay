@@ -366,8 +366,8 @@ namespace EchoRelay
                 // Update server count on the game server tab.
                 tabGameServers.Text = $"Game Servers ({gameServersControl.GameServerCount})";
 
-                apiManager.peerStatsObject.gameServers = gameServersControl.GameServerCount;
-                apiManager.PeerStats.EditPeerStats(apiManager.peerStatsObject, Server.PublicIPAddress.ToString());
+                apiManager.peerStatsObject.GameServers = gameServersControl.GameServerCount;
+                Task.Run(() => apiManager.PeerStats.EditPeerStats(apiManager.peerStatsObject, Server.PublicIPAddress?.ToString() ?? "localhost"));
 
                 AppendLogText($"[{gameServer.Peer.Service.Name}] client({gameServer.Peer.Address}:{gameServer.Peer.Port}) registered game server (server_id={gameServer.ServerId}, region_symbol={gameServer.RegionSymbol}, version_lock={gameServer.VersionLock}, endpoint=<{gameServer.ExternalAddress}:{gameServer.Port}>)\n");
             });

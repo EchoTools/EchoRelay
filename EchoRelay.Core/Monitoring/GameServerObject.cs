@@ -4,21 +4,24 @@ namespace EchoRelay.Core.Monitoring;
 
 public class GameServerObject
 {
-    public string serverIP { get; set; }
-    [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-    public string region { get; set; }
-    [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-    public string level { get; set; }
-    [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-    public string gameMode { get; set; }
-    [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-    public int playerCount { get; set; }
-    [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-    public bool assigned { get; set; }
-    [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-    public string sessionID { get; set; }
-    [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-    public ulong gameServerID { get; set; }
-    [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-    public bool @public { get; set; }
+    public string? ServerIp { get; set; }
+
+    [JsonProperty(NullValueHandling = NullValueHandling.Ignore, PropertyName = "serverIP")]
+    public string? Region { get; set; }
+
+    [JsonProperty(NullValueHandling = NullValueHandling.Ignore, PropertyName = "region")]
+    public string? Level { get; set; }
+    [JsonProperty(NullValueHandling = NullValueHandling.Ignore, PropertyName = "level")]
+    public string? GameMode { get; set; }
+    [JsonProperty(NullValueHandling = NullValueHandling.Ignore, PropertyName = "gameMode")]
+    public int PlayerCount { get; set; }
+    [JsonProperty(NullValueHandling = NullValueHandling.Ignore, PropertyName = "playerCount")]
+    public bool Assigned { get; set; }
+
+    [JsonProperty(NullValueHandling = NullValueHandling.Ignore, PropertyName = "assigned")]
+    public string? SessionId { get; set; }
+    [JsonProperty(NullValueHandling = NullValueHandling.Ignore, PropertyName = "sessionID")]
+    public ulong GameServerId { get; set; }
+    [JsonProperty(NullValueHandling = NullValueHandling.Ignore, PropertyName = "gameServerID")]
+    public bool @Public { get; set; }
 }

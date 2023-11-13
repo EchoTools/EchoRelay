@@ -53,16 +53,16 @@ namespace EchoRelay.Core.Server.Services.ServerDB
             OnGameServerRegistered?.Invoke(registeredGameServer);
             
             GameServerObject gameServerObject = new GameServerObject();
-            gameServerObject.serverIP = registeredGameServer.Server.PublicIPAddress.ToString();
-            gameServerObject.region = registeredGameServer.RegionSymbol.ToString();
-            gameServerObject.sessionID = registeredGameServer.SessionId.ToString();
-            gameServerObject.gameServerID = registeredGameServer.ServerId;
-            gameServerObject.assigned = false;
-            gameServerObject.gameMode = registeredGameServer.SessionGameTypeSymbol.ToString();
-            gameServerObject.@public = registeredGameServer.SessionLobbyType == ERGameServerStartSession.LobbyType.Public;
-            gameServerObject.level = registeredGameServer.SessionLevelSymbol.ToString();
-            gameServerObject.playerCount = registeredGameServer.SessionPlayerCount;
-            apiManager.GameServer.AddGameServerAsync(gameServerObject);
+            gameServerObject.ServerIp = registeredGameServer.Server.PublicIPAddress?.ToString();
+            gameServerObject.Region = registeredGameServer.RegionSymbol.ToString();
+            gameServerObject.SessionId = registeredGameServer.SessionId.ToString();
+            gameServerObject.GameServerId = registeredGameServer.ServerId;
+            gameServerObject.Assigned = false;
+            gameServerObject.GameMode = registeredGameServer.SessionGameTypeSymbol.ToString();
+            gameServerObject.Public = registeredGameServer.SessionLobbyType == ERGameServerStartSession.LobbyType.Public;
+            gameServerObject.Level = registeredGameServer.SessionLevelSymbol.ToString();
+            gameServerObject.PlayerCount = registeredGameServer.SessionPlayerCount;
+            Task.Run(() => apiManager.GameServer.AddGameServerAsync(gameServerObject));
             return registeredGameServer;
         }
 
@@ -80,7 +80,7 @@ namespace EchoRelay.Core.Server.Services.ServerDB
 
         public void RemoveGameServer(RegisteredGameServer registeredGameServer)
         {
-            apiManager.GameServer.DeleteGameServerAsync(registeredGameServer.ServerId.ToString());
+            Task.Run(() => apiManager.GameServer.DeleteGameServerAsync(registeredGameServer.ServerId.ToString()));
             RemoveGameServer(registeredGameServer.ServerId);
         }
         public void RemoveGameServer(ulong serverId)

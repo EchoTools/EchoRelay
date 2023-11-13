@@ -224,16 +224,16 @@ namespace EchoRelay.Core.Server
 
             ServerObject server = new ServerObject();
             ServiceConfig serviceConfig = Settings.GenerateServiceConfig(PublicIPAddress?.ToString() ?? "localhost");
-            server.apiservice_host = serviceConfig.ApiServiceHost;
-            server.loginservice_host = serviceConfig.LoginServiceHost;
-            server.configservice_host = serviceConfig.ConfigServiceHost;
-            server.matchingservice_host = serviceConfig.MatchingServiceHost;
-            server.serverdb_host = serviceConfig.ServerDBServiceHost;
-            server.transactionservice_host = serviceConfig.TransactionServiceHost;
-            server.ip = PublicIPAddress.ToString();
-            server.online = true;
-            apiManager.Server.EditServer(server, server.ip);
-            
+            server.ApiServiceHost = serviceConfig.ApiServiceHost;
+            server.LoginServiceHost = serviceConfig.LoginServiceHost;
+            server.ConfigServiceHost = serviceConfig.ConfigServiceHost;
+            server.MatchingServiceHost = serviceConfig.MatchingServiceHost;
+            server.ServerDbHost = serviceConfig.ServerDBServiceHost;
+            server.TransactionServiceHost = serviceConfig.TransactionServiceHost;
+            server.Ip = PublicIPAddress?.ToString() ?? "localhost";
+            server.Online = true;
+            _ = Task.Run(() => apiManager?.Server.EditServer(server, server.Ip));
+
             // Enter a loop to accept new web socket connections.
             try
             {
@@ -322,9 +322,9 @@ namespace EchoRelay.Core.Server
         public async void Stop()
         {
             ServerObject server = new ServerObject();
-            server.ip = PublicIPAddress.ToString();
-            server.online = false;
-            apiManager.Server.EditServer(server, server.ip);
+            server.Ip = PublicIPAddress?.ToString() ?? "localhost";
+            server.Online = false;
+            _ = Task.Run(() => apiManager?.Server.EditServer(server, server.Ip));            
             // Cancel any cancellation token we have now.
             _cancellationTokenSource?.Cancel();
         }

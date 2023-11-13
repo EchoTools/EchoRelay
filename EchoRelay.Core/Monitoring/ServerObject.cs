@@ -5,20 +5,21 @@ namespace EchoRelay.Core.Monitoring;
 
 public class ServerObject
 {
-    public string ip { get; set; }
-    [JsonProperty(NullValueHandling = NullValueHandling.Ignore)] 
-    public string apiservice_host { get; set; }
-    [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-    public string configservice_host { get; set; }
-    [JsonProperty(NullValueHandling = NullValueHandling.Ignore)] 
-    public string loginservice_host { get; set; }
-    [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-    public string matchingservice_host { get; set; }
-    [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-    public string serverdb_host { get; set; }
-    [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-    public string transactionservice_host { get; set; }
+    public string Ip { get; set; } = "";
+
+    [JsonProperty(NullValueHandling = NullValueHandling.Ignore, PropertyName = "apiservice_host")]
+    public string? ApiServiceHost { get; set; }
+    [JsonProperty(NullValueHandling = NullValueHandling.Ignore, PropertyName = "configservice_host")]
+    public string? ConfigServiceHost { get; set; }
+    [JsonProperty(NullValueHandling = NullValueHandling.Ignore, PropertyName = "loginservice_host")]
+    public string? LoginServiceHost { get; set; }
+    [JsonProperty(NullValueHandling = NullValueHandling.Ignore, PropertyName = "matchingservice_host")]
+    public string? MatchingServiceHost { get; set; }
+    [JsonProperty(NullValueHandling = NullValueHandling.Ignore, PropertyName = "serverdb_host")]
+    public string? ServerDbHost { get; set; }
+    [JsonProperty(NullValueHandling = NullValueHandling.Ignore, PropertyName = "transactionservice_host")]
+    public string? TransactionServiceHost { get; set; }
     
-    public string publisher_lock { get; set; } = "rad15_live";
-    public bool online { get; set; } = false;
+    public string PublisherLock { get; set; } = "rad15_live";
+    public bool Online { get; set; } = false;
 }

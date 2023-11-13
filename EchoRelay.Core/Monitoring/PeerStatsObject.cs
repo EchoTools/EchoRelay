@@ -4,17 +4,19 @@ namespace EchoRelay.Core.Monitoring;
 
 public class PeerStatsObject
 {
-    public string serverIP { get; set; }
-    [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-    public int gameServers { get; set; }
-    [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-    public int login { get; set; }
-    [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-    public int matching { get; set; }
-    [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-    public int config { get; set; }
-    [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-    public int transaction { get; set; }
-    [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-    public int serverdb { get; set; }
+    public string? ServerIp { get; set; }
+    [JsonProperty(NullValueHandling = NullValueHandling.Ignore, PropertyName = "gameServers")]
+    public int? GameServers { get; set; } = 0;
+    [JsonProperty(NullValueHandling = NullValueHandling.Ignore, PropertyName = "login")]
+    public int? Login { get; set; } = 0;
+    [JsonProperty(NullValueHandling = NullValueHandling.Ignore, PropertyName = "matching")]
+    public int? Matching { get; set; } = 0;
+    [JsonProperty(NullValueHandling = NullValueHandling.Ignore, PropertyName = "config")]
+    public int? Config { get; set; } = 0;
+
+    [JsonProperty(NullValueHandling = NullValueHandling.Ignore, PropertyName = "transaction")]
+    public int? Transaction { get; set; } = 0;
+
+    [JsonProperty(NullValueHandling = NullValueHandling.Ignore, PropertyName = "serverdb")]
+    public int? ServerDb { get; set; } = 0;
 }

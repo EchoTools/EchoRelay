@@ -23,13 +23,13 @@ namespace EchoRelay.Cli
         /// <summary>
         /// The instance of the server hosting central services.
         /// </summary>
-        private static Server Server;
+        private static Server? Server;
         /// <summary>
         /// The update timer used to trigger a peer stats update on a given interval.
         /// </summary>
         private static System.Timers.Timer? peerStatsUpdateTimer;
 
-        private static ApiManager apiManager;
+        private static ApiManager? apiManager;
         /// <summary>
         /// The time that the server was started.
         /// </summary>
@@ -43,7 +43,7 @@ namespace EchoRelay.Cli
         private static extern bool SetConsoleCtrlHandler(EventHandler handler, bool add);
 
         private delegate bool EventHandler(CtrlType sig);
-        private static EventHandler consoleCloseHandler;
+        private static EventHandler? consoleCloseHandler;
 
         // Enum to represent different CtrlTypes
         private enum CtrlType
@@ -247,15 +247,15 @@ namespace EchoRelay.Cli
 
         private static void updateServerInfo()
         {
-            apiManager.peerStatsObject.serverIP = Server.PublicIPAddress?.ToString() ?? "localhost";
-            apiManager.peerStatsObject.login = Server.LoginService.Peers.Count;
-            apiManager.peerStatsObject.matching = Server.MatchingService.Peers.Count;
-            apiManager.peerStatsObject.config = Server.ConfigService.Peers.Count;
-            apiManager.peerStatsObject.transaction = Server.TransactionService.Peers.Count;
-            apiManager.peerStatsObject.serverdb = Server.ServerDBService.Peers.Count;
-            apiManager.peerStatsObject.gameServers = Server.ServerDBService.Registry.RegisteredGameServers.Count;
+            apiManager.peerStatsObject.ServerIp = Server?.PublicIPAddress?.ToString() ?? "localhost";
+            apiManager.peerStatsObject.Login = Server?.LoginService.Peers.Count;
+            apiManager.peerStatsObject.Matching = Server?.MatchingService.Peers.Count;
+            apiManager.peerStatsObject.Config = Server?.ConfigService.Peers.Count;
+            apiManager.peerStatsObject.Transaction = Server?.TransactionService.Peers.Count;
+            apiManager.peerStatsObject.ServerDb = Server?.ServerDBService.Peers.Count;
+            apiManager.peerStatsObject.GameServers = Server?.ServerDBService.Registry.RegisteredGameServers.Count;
             
-            apiManager.PeerStats.EditPeerStats(apiManager.peerStatsObject, apiManager.peerStatsObject.serverIP);
+            Task.Run(() => apiManager.PeerStats.EditPeerStats(apiManager.peerStatsObject, apiManager.peerStatsObject.ServerIp));
         }
         private static void Server_OnServicePeerConnected(Core.Server.Services.Service service, Core.Server.Services.Peer peer)
         {
@@ -353,7 +353,7 @@ namespace EchoRelay.Cli
         private static bool ConsoleCloseHandler(CtrlType sig)
         {
             Console.WriteLine("Console is closing. Performing cleanup...");
-            Server.Stop();
+            Server?.Stop();
     
             Thread.Sleep(1500);
             
