@@ -24,7 +24,7 @@ namespace EchoRelay.Cli
         /// <summary>
         /// The instance of the server hosting central services.
         /// </summary>
-        private static Server Server;
+        public static Server Server;
         /// <summary>
         /// The update timer used to trigger a peer stats update on a given interval.
         /// </summary>
@@ -178,7 +178,7 @@ namespace EchoRelay.Cli
             });
         }
 
-        private static void Server_StartHTTPAPI()
+        private static async void Server_StartHTTPAPI()
         {
             Info("[HTTPSERVER] Starting HTTP API");
             using var listener = new HttpListener();
@@ -199,7 +199,6 @@ namespace EchoRelay.Cli
                 if (path != null && path.StartsWith("/ban") && req.HttpMethod == "POST" && req.ContentType == "application/x-www-form-urlencoded")
                 {
                     string username = GetFormDataValue(req, "username");
-
                     AccountResource account = AccountUtils.GetAccount(username);
                     TimeSpan time = GetFromTimeFrameString(GetFormDataValue(req, "time"));
 
@@ -207,6 +206,18 @@ namespace EchoRelay.Cli
                     string jsonResponse = banSuccess
                         ? "{\"error\": null, \"success\": true}"
                         : "{\"error\": \"Ban was unsuccessful\", \"success\": false}";
+
+                    SendJsonResponse(ctx.Response, jsonResponse);
+                }
+                if (path != null && path.StartsWith("/kick") && req.HttpMethod == "POST" && req.ContentType == "application/x-www-form-urlencoded")
+                {
+                    string username = GetFormDataValue(req, "username");
+                    AccountResource account = AccountUtils.GetAccount(username);
+
+                    bool kickSuccess = await AccountUtils.Kick(account);
+                    string jsonResponse = kickSuccess
+                        ? "{\"error\": null, \"success\": true}"
+                        : "{\"error\": \"Kick was unsuccessful\", \"success\": false}";
 
                     SendJsonResponse(ctx.Response, jsonResponse);
                 }

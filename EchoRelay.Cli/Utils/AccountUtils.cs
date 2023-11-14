@@ -42,5 +42,27 @@ namespace EchoRelay.Cli.Utils
                 return false;
             }
         }
+
+        public static async Task<bool> Kick(AccountResource account)
+        {
+            try
+            {
+                foreach (var rgsKvp in Program.Server.ServerDBService.Registry.RegisteredGameServers)
+                {
+                    var peer = (await rgsKvp.Value.GetPlayers())
+                        .FirstOrDefault(x => x.Peer?.UserDisplayName!.ToString() == account.Profile.Server.DisplayName);
+
+                    if (peer.Peer != null)
+                    {
+                        await rgsKvp.Value.KickPlayer(peer.PlayerSession);
+                    }
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
     }
 }
