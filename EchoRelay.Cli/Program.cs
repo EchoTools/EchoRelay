@@ -12,6 +12,7 @@ using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System.Net;
 using System.Reflection;
+using static EchoRelay.Cli.API.HTTPServer;
 
 namespace EchoRelay.Cli
 {
@@ -20,7 +21,7 @@ namespace EchoRelay.Cli
         /// <summary>
         /// The parsed CLI argument options for the application.
         /// </summary>
-        private static CliOptions? Options;
+        public static CliOptions? Options;
         /// <summary>
         /// The instance of the server hosting central services.
         /// </summary>
@@ -178,100 +179,6 @@ namespace EchoRelay.Cli
             });
         }
 
-        private static async void Server_StartHTTPAPI()
-        {
-            Info("[HTTPSERVER] Starting HTTP API");
-            using var listener = new HttpListener();
-            listener.Prefixes.Add($"http://0.0.0.0:{Options?.HTTPPort}/");
-
-            listener.Start();
-
-            Console.WriteLine($" {Options?.HTTPPort}...");
-            Info($"[HTTPSERVER] Successfully started HTTP API on port {Options?.HTTPPort}!");
-
-            while (true)
-            {
-                HttpListenerContext ctx = listener.GetContext();
-                HttpListenerRequest req = ctx.Request;
-
-                string? path = ctx.Request.Url?.LocalPath;
-
-                if (path != null && path.StartsWith("/ban") && req.HttpMethod == "POST" && req.ContentType == "application/x-www-form-urlencoded")
-                {
-                    string username = GetFormDataValue(req, "username");
-                    AccountResource account = AccountUtils.GetAccount(username);
-                    TimeSpan time = GetFromTimeFrameString(GetFormDataValue(req, "time"));
-
-                    bool banSuccess = AccountUtils.Ban(account, time);
-                    string jsonResponse = banSuccess
-                        ? "{\"error\": null, \"success\": true}"
-                        : "{\"error\": \"Ban was unsuccessful\", \"success\": false}";
-
-                    SendJsonResponse(ctx.Response, jsonResponse);
-                }
-                if (path != null && path.StartsWith("/kick") && req.HttpMethod == "POST" && req.ContentType == "application/x-www-form-urlencoded")
-                {
-                    string username = GetFormDataValue(req, "username");
-                    AccountResource account = AccountUtils.GetAccount(username);
-
-                    bool kickSuccess = await AccountUtils.Kick(account);
-                    string jsonResponse = kickSuccess
-                        ? "{\"error\": null, \"success\": true}"
-                        : "{\"error\": \"Kick was unsuccessful\", \"success\": false}";
-
-                    SendJsonResponse(ctx.Response, jsonResponse);
-                }
-                else
-                {
-                    Info($"Request for '{path}' couldn't be completed since there's literally nothing to do with it.");
-                }
-            }
-        }
-
-        public static TimeSpan GetFromTimeFrameString(string timeFrameString)
-        {
-            var period = int.Parse(timeFrameString.Remove(timeFrameString.Length - 1, 1));
-            var timeType = timeFrameString.Substring(timeFrameString.Length - 1, 1);
-
-            return timeType switch
-            {
-                "h" => TimeSpan.FromHours(period),
-                "d" => TimeSpan.FromDays(period),
-                "m" => TimeSpan.FromDays(period * 30),
-                _ => throw new Exception("No possible time frame given! Possible time frames = h (hours), d (days), m (months)")
-            };
-        }
-
-        static string GetFormDataValue(HttpListenerRequest request, string key)
-        {
-            using (Stream body = request.InputStream)
-            {
-                using (StreamReader reader = new StreamReader(body, request.ContentEncoding))
-                {
-                    string formData = reader.ReadToEnd();
-                    var formDataPairs = formData.Split('&');
-
-                    foreach (var pair in formDataPairs)
-                    {
-                        var keyValue = pair.Split('=');
-                        if (keyValue.Length == 2 && keyValue[0] == key)
-                        {
-                            return Uri.UnescapeDataString(keyValue[1]);
-                        }
-                    }
-                }
-            }
-
-            return string.Empty;
-        }
-        static void SendJsonResponse(HttpListenerResponse response, string jsonResponse)
-        {
-            response.ContentType = "application/json";
-            byte[] buffer = System.Text.Encoding.UTF8.GetBytes(jsonResponse);
-            response.ContentLength64 = buffer.Length;
-            response.OutputStream.Write(buffer, 0, buffer.Length);
-            response.Close();
-        }
 
         private static void Server_OnServerStarted(Server server)
         {
