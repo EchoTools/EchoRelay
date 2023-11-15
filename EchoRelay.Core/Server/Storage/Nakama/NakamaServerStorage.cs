@@ -1,6 +1,7 @@
 ﻿using EchoRelay.Core.Game;
 using EchoRelay.Core.Server.Storage.Resources;
 using EchoRelay.Core.Server.Storage.Types;
+using Nakama;
 using Nk = Nakama;
 namespace EchoRelay.Core.Server.Storage.Nakama
 {
@@ -14,7 +15,7 @@ namespace EchoRelay.Core.Server.Storage.Nakama
         private NakamaResourceProvider<AccessControlListResource> _accessControlList;
 
         public override ResourceCollectionProvider<XPlatformId, AccountResource> Accounts => _accounts;
-        private NakamaAccountResourceProvider<XPlatformId, AccountResource> _accounts;
+        private NakamaResourceCollectionProvider<XPlatformId, AccountResource> _accounts;
 
         public override ResourceProvider<ChannelInfoResource> ChannelInfo => _channelInfo;
         private NakamaResourceProvider<ChannelInfoResource> _channelInfo;
@@ -35,17 +36,32 @@ namespace EchoRelay.Core.Server.Storage.Nakama
         private readonly object _symbolCacheLock = new object();
 
         public Nk.Client Client;
-        public Nk.Session Session; 
+        private Session _session;
 
-        public NakamaServerStorage(Nk.Client client, Nk.Session session)
+        public async Task<Nk.Session> RefreshSessionAsync()
+        {
+            if (_session == null || _session.IsExpired)
+            {
+                _session = (Nk.Session)await Client.AuthenticateDeviceAsync(RelayId, create: true);
+            } else
+            {
+                _session = (Nk.Session)await Client.SessionRefreshAsync(_session);
+            }
+            
+            return _session;
+        }
+        public string RelayId { get; }
+
+        public NakamaServerStorage(Nk.Client client, Nk.Session session, string relayId)
         {
             Client = client;
-            Session = session;
+            _session = session;
+            RelayId = relayId;
 
             // Create our resource containers
             _accessControlList = new NakamaResourceProvider<AccessControlListResource>(this, "relayConfig", "accessControlLists");
-            _channelInfo = new NakamaResourceProvider<ChannelInfoResource>(this, "lobbyConfig", "channelInfo");
-            _accounts = new NakamaAccountResourceProvider<XPlatformId, AccountResource>(this, "userAccounts",  x => $"{x}");
+            _channelInfo = new NakamaResourceProvider<ChannelInfoResource>(this, "channelInfo", "channelInfo");
+            _accounts = new NakamaResourceCollectionProvider<XPlatformId, AccountResource>(this, "userAccounts",  x => $"{x}");
             _configs = new NakamaResourceCollectionProvider<(string Type, string Identifier), ConfigResource>(this, "serverConfigs", x => $"{x.Identifier}");
             _documents = new NakamaResourceCollectionProvider<(string Type, string Language), DocumentResource>(this, "serverDocuments", x => $"{x.Type}_{x.Language}");
             _loginSettings = new NakamaResourceProvider<LoginSettingsResource>(this, "loginConfig", "loginSettings");
@@ -55,8 +71,8 @@ namespace EchoRelay.Core.Server.Storage.Nakama
         public static async Task<NakamaServerStorage> ConnectNakamaStorageAsync(string scheme, string host, int port, string serverKey, string deviceId)
         {
             var client = new Nk.Client(scheme, host, port, serverKey);
-            var session = await client.AuthenticateDeviceAsync(deviceId, create: true);
-            return new NakamaServerStorage(client, (Nk.Session)session);
+            var session = await client.AuthenticateDeviceAsync(deviceId, username : deviceId, create: true);
+            return new NakamaServerStorage(client, (Nk.Session)session, deviceId);
         }
     }
 }

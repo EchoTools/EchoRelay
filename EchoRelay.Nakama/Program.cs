@@ -4,7 +4,6 @@ using EchoRelay.Core.Server.Messages;
 using EchoRelay.Core.Server.Services;
 using EchoRelay.Core.Server.Storage;
 using EchoRelay.Core.Server.Storage.Nakama;
-using EchoRelay.Core.Server.Storage.Types;
 using EchoRelay.Core.Utils;
 using Microsoft.AspNetCore.WebUtilities;
 using Newtonsoft.Json;
@@ -129,7 +128,7 @@ namespace EchoRelay.Nakama
                     return;
                 } else
                 {
-                    _relayId = Regex.Replace(_relayId, "(?:RLY-)?(?<id>[-A-z0-9_]+)", "RLY-${id}");
+                    _relayId = Regex.Replace(_relayId, "^(?:RLY-)?(?<id>[-A-z0-9_]+)", "RLY-${id}");
                     Info($"Authenticating with relayId: {_relayId}");
                 }
 

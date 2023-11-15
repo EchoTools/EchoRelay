@@ -17,4 +17,10 @@
     <ProjectReference Include="..\EchoRelay.Core\EchoRelay.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="Nakama">
+      <HintPath>..\common\Nakama.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>
