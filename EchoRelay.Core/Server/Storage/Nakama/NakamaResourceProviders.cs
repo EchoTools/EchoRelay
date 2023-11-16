@@ -6,6 +6,8 @@ using Nakama;
 using Newtonsoft.Json;
 using System.Collections.Concurrent;
 using System.Reflection;
+using System.Text.RegularExpressions;
+
 namespace EchoRelay.Core.Server.Storage.Nakama
 {
     /// <summary>
@@ -300,7 +302,6 @@ namespace EchoRelay.Core.Server.Storage.Nakama
             return resource;
         }
 
-
         protected async Task<AccountResource?> GetAccountResourceAsync(K key)
         {
             var resource = new AccountResource();
@@ -336,15 +337,27 @@ namespace EchoRelay.Core.Server.Storage.Nakama
 
             resource.Profile.Client.DisplayName = userAccount.User.DisplayName;
 
-            var result = await Storage.Client.ListGroupsAsync(session, ModeratorGroupName, 1);
+            // Check for the moderator group membership
+            var result = await Storage.Client.ListGroupsAsync(session, ModeratorGroupName);
             if (result.Groups.Any())
             {
                 var groupId = result.Groups.First().Id;
-                var userGroups = await client.ListUserGroupsAsync(userSession, state: 2, limit: 0, result.Cursor);
-                resource.IsModerator = userGroups.UserGroups.Where(g => g.Group.Id == groupId).Any();
+                // state 2 is a member
+                var gResult = await client.ListGroupUsersAsync(session, groupId, state: 2, limit: 100, result.Cursor);
+                while (result.Cursor != null)
+                {
+                    gResult = await client.ListGroupUsersAsync(session, groupId, state: 2, limit: 100, result.Cursor);
+                    if (gResult.GroupUsers.Where(gU => gU.User.Id == userAccount.User.Id).Any())
+                    {
+                        resource.IsModerator = true;
+                        break;
+                    }
+                }
             }
             else
             {
+                // Create the group if it's missing
+                await Storage.Client.CreateGroupAsync(session, ModeratorGroupName, maxCount : 1000);
                 resource.IsModerator = false;
             }
 
@@ -412,19 +425,6 @@ namespace EchoRelay.Core.Server.Storage.Nakama
 
             await Storage.Client.UpdateAccountAsync(userSession, userName, displayName: resource.Profile.Client.DisplayName);
 
-            if (resource.IsModerator)
-            {
-
-                // create the group
-                // query the group, and try to join the group
-                var result = await Storage.Client.ListGroupsAsync(session, ModeratorGroupName, 1);
-                if (!result.Groups.Any())
-                {
-                    var group = await Storage.Client.CreateGroupAsync(session, ModeratorGroupName);
-                }
-                string groupId = result.Groups.First().Id;
-                await Storage.Client.AddGroupUsersAsync(session, groupId, new[] { userAccount.User.Id });
-            }
 
             // The only top level members we need are the account hash and salt
             Dictionary<string, byte[]> authSecrets = new Dictionary<string, byte[]>();
