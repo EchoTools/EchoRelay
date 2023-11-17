@@ -8,6 +8,12 @@ using EchoRelay.Core.Utils;
 using Microsoft.AspNetCore.WebUtilities;
 using Newtonsoft.Json;
 using System.Text.RegularExpressions;
+using Serilog;
+using Serilog.Events;
+using Serilog.Sinks.SystemConsole.Themes;
+using EchoRelay.Core.Server.Messages.Login;
+using EchoRelay.Core.Server.Storage.Types;
+//using EchoRelay.Nakama.Client;
 
 namespace EchoRelay.Nakama
 {
@@ -75,8 +81,18 @@ namespace EchoRelay.Nakama
             [Option("servervalidationtimeout", Required = false, Default = 3000, HelpText = "Sets the timeout for game server validation using raw ping requests. In milliseconds.")]
             public int ServerDBValidateGameServersTimeout { get; set; }
 
-            [Option('v', "verbose", Required = false, Default = false, HelpText = "Verbose output for every message sent between clients and servers.")]
+            [Option('v', "verbose", Required = false, Default = false, HelpText = "Output all data to console/file (includes debug output). ")]
             public bool Verbose { get; set; } = true;
+
+            [Option('V', "debug", Required = false, Default = false, HelpText = "Output all client/server messages.")]
+            public bool Debug { get; set; } = true;
+
+            [Option('l', "logfile", Required = false, Default = null, HelpText = "Specifies the path to the log file.")]
+            public string? LogFilePath { get; set; }
+
+            [Option("disable-cache", Required = false, Default = false, HelpText = "Disables the file cache. Edits to JSON files will be immediately effective.")]
+            public bool DisableCache { get; set; } = true;
+
         }
 
         /// <summary>
@@ -94,12 +110,12 @@ namespace EchoRelay.Nakama
                 // Verify other arguments
                 if (options.Port < 0 || options.Port > ushort.MaxValue)
                 {
-                    Error($"Provided listen port is invalid. You must a value between 1 and {ushort.MaxValue}.");
+                    Log.Fatal($"Provided listen port is invalid. You must a value between 1 and {ushort.MaxValue}.");
                     return;
                 }
                 else
                 {
-                    Info($"[SERVER] Listening on port {options.Port}");
+                    Log.Information($"[SERVER] Listening on port {options.Port}");
                 }
 
                 // Validate the Nakama URI
@@ -110,27 +126,32 @@ namespace EchoRelay.Nakama
                 }
                 catch (Exception ex)
                 {
-                    Error($"Provided Nakama URI is invalid: {ex.Message}.");
+                    Log.Fatal($"Provided Nakama URI is invalid: {ex.Message}.");
                     return;
                 }
 
                 var _serverKey = QueryHelpers.ParseQuery(_nakamaUri.Query).GetValueOrDefault("serverKey", Options.NakamaServerKey);
                 if (String.IsNullOrEmpty(_serverKey))
                 {
-                    Error($"Server key must be provided in Nakama URI (e.g. ?serverKey=...) or via '-nakama-serverkey' argument.");
+                    Log.Fatal($"Server key must be provided in Nakama URI (e.g. ?serverKey=...) or via '-nakama-serverkey' argument.");
                     return;
                 }
 
                 var _relayId = QueryHelpers.ParseQuery(_nakamaUri.Query).GetValueOrDefault("relayId", Options.NakamaServerKey);
                 if (String.IsNullOrEmpty(_relayId))
                 {
-                    Error($"Relay identifier must be provided in Nakama URI (e.g. ?relayId=...) or via '-nakama-deviceid' argument.");
+                    Log.Fatal($"Relay identifier must be provided in Nakama URI (e.g. ?relayId=...) or via '-nakama-deviceid' argument.");
                     return;
-                } else
+                }
+                else
                 {
                     _relayId = Regex.Replace(_relayId, "^(?:RLY-)?(?<id>[-A-z0-9_]+)", "RLY-${id}");
-                    Info($"Authenticating with relayId: {_relayId}");
+                    Log.Information($"Authenticating with relayId: {_relayId}");
                 }
+
+                ConfigureLogger(options);
+
+                Log.Debug($"Runtime arguments: '{string.Join(" ", args)}'");
 
                 // Setup the Nakama connection
 
@@ -141,7 +162,7 @@ namespace EchoRelay.Nakama
                 }
                 catch (Exception ex)
                 {
-                    Error($"Could not connect Nakama API: ${ex.Message}");
+                    Log.Fatal($"Could not connect Nakama API: ${ex.Message}");
                     return;
                 }
 
@@ -150,35 +171,35 @@ namespace EchoRelay.Nakama
                 // Ensure the required resources are initialized.
                 if (!serverStorage.AccessControlList.Exists())
                 {
-                    Warning("[SERVER] Access Control Lists objects do not exist. Creating...");
+                    Log.Warning("[SERVER] Access Control Lists objects do not exist. Creating...");
                     InitialDeployment.DeployAccessControlList(serverStorage);
                 }
 
                 if (!serverStorage.ChannelInfo.Exists())
                 {
-                    Warning("[SERVER] Channel Info objects do not exist. Creating...");
+                    Log.Warning("[SERVER] Channel Info objects do not exist. Creating...");
                     InitialDeployment.DeployChannelInfo(serverStorage);
                 }
 
                 if (!serverStorage.Configs.Exists(("main_menu", "main_menu")))
                 {
-                    Warning("[SERVER] Configs objects do not exist. Creating...");
+                    Log.Warning("[SERVER] Configs objects do not exist. Creating...");
                     InitialDeployment.DeployConfigs(serverStorage);
                 }
 
                 if (!serverStorage.Documents.Exists(("eula", "en")))
                 {
-                    Warning("[SERVER] Document objects do not exist. Creating...");
+                    Log.Warning("[SERVER] Document objects do not exist. Creating...");
                     InitialDeployment.DeployDocuments(serverStorage);
                 }
                 if (!serverStorage.LoginSettings.Exists())
                 {
-                    Warning("[SERVER] Login Settings do not exist. Creating...");
+                    Log.Warning("[SERVER] Login Settings do not exist. Creating...");
                     InitialDeployment.DeployLoginSettings(serverStorage);
                 }
                 if (!serverStorage.SymbolCache.Exists())
                 {
-                    Warning("[SERVER] Symbol Cache does not exist. Creating...");
+                    Log.Warning("[SERVER] Symbol Cache does not exist. Creating...");
                     InitialDeployment.DeploySymbolCache(serverStorage);
                 }
 
@@ -206,25 +227,49 @@ namespace EchoRelay.Nakama
                 Server.ServerDBService.OnGameServerRegistrationFailure += ServerDBService_OnGameServerRegistrationFailure;
 
                 // Set up all verbose event handlers.
-                if (options.Verbose)
+                if (options.Debug || options.Verbose)
                 {
                     Server.OnServicePacketSent += Server_OnServicePacketSent;
                     Server.OnServicePacketReceived += Server_OnServicePacketReceived;
                 }
 
-                await Server.Start();
+                // Setup metrics forwarding
+                //Server.OnServicePacketReceived += Metrics.Server_OnServicePacketReceived;
 
+
+                await Server.Start();
             });
+
+        private static void ConfigureLogger(CliOptions options)
+        {
+            var logConfig = new LoggerConfiguration()
+                .WriteTo.Console(theme: AnsiConsoleTheme.Code);
+
+            if (options.LogFilePath != null)
+            {
+                logConfig.WriteTo.File(
+                    path: Options.LogFilePath,
+                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}");
+            }
+
+            logConfig = options.Verbose
+                ? logConfig.MinimumLevel.Verbose()
+                : options.Debug
+                    ? logConfig.MinimumLevel.Debug()
+                    : logConfig.MinimumLevel.Information();
+
+            Log.Logger = logConfig.CreateLogger();
+        }
 
         private static void Server_OnServerStarted(Server server)
         {
             // Print our server started message
-            Info("[SERVER] Server started");
+            Log.Information("[SERVER] Server started");
 
             // Print our service config.
             Core.Game.ServiceConfig serviceConfig = server.Settings.GenerateServiceConfig(server.PublicIPAddress?.ToString() ?? "localhost", serverConfig: true);
             string serviceConfigSerialized = JsonConvert.SerializeObject(serviceConfig, Formatting.Indented, StreamIO.JsonSerializerSettings);
-            Info($"[SERVER] Generated service config:\n{serviceConfigSerialized}");
+            Log.Information($"[SERVER] Generated service config:\n{serviceConfigSerialized}");
 
             // Copy the service config to the clipboard if required.
             if (Options?.OutputConfigPath != null)
@@ -233,16 +278,15 @@ namespace EchoRelay.Nakama
                 try
                 {
                     File.WriteAllText(Options!.OutputConfigPath, serviceConfigSerialized);
-                    Info($"[SERVER] Output generated service config to path \"{Options!.OutputConfigPath}\"");
+                    Log.Information($"[SERVER] Output generated service config to path \"{Options!.OutputConfigPath}\"");
                 }
                 catch (Exception ex)
                 {
-                    Error($"[SERVER] Failed to output generated service config to path \"{Options!.OutputConfigPath}\":\n{ex}");
+                    Log.Error($"[SERVER] Failed to output generated service config to path \"{Options!.OutputConfigPath}\":\n{ex}");
                 }
             }
 
             // Start the peer stats update timer
-            startedTime = DateTime.UtcNow;
             peerStatsUpdateTimer = new System.Timers.Timer(Options!.StatsUpdateInterval);
             peerStatsUpdateTimer.Start();
             peerStatsUpdateTimer.Elapsed += PeerStatsUpdateTimer_Elapsed;
@@ -250,8 +294,7 @@ namespace EchoRelay.Nakama
 
         private static void PeerStatsUpdateTimer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e)
         {
-            Info($"[PEERSTATS] " +
-                $"elapsed: {(DateTime.UtcNow - startedTime)}, " +
+            Log.Information($"[PEERSTATS] " +
                 $"gameservers: {Server.ServerDBService.Registry.RegisteredGameServers.Count}, " +
                 $"login: {Server.LoginService.Peers.Count}, " +
                 $"config: {Server.ConfigService.Peers.Count}, " +
@@ -267,102 +310,54 @@ namespace EchoRelay.Nakama
             peerStatsUpdateTimer?.Stop();
 
             // Print our server stopped message
-            Info("[SERVER] Server stopped");
+            Log.Information("[SERVER] Server stopped");
+            Log.CloseAndFlush();
         }
 
         private static void Server_OnAuthorizationResult(Server server, System.Net.IPEndPoint client, bool authorized)
         {
             if (!authorized)
-                Error($"[SERVER] client({client.Address}:{client.Port}) failed authorization");
+                Log.Information($"[SERVER] client({client.Address}:{client.Port}) failed authorization");
         }
+
         private static void Server_OnServicePeerConnected(Core.Server.Services.Service service, Core.Server.Services.Peer peer)
         {
-            Info($"[{service.Name}] client({peer.Address}:{peer.Port}) connected");
+            Log.Debug($"[{service.Name}] client({peer.Address}:{peer.Port}) connected");
         }
+
         private static void Server_OnServicePeerDisconnected(Core.Server.Services.Service service, Core.Server.Services.Peer peer)
         {
-            Info($"[{service.Name}] client({peer.Address}:{peer.Port}) disconnected");
+            Log.Debug($"[{service.Name}] client({peer.Address}:{peer.Port}) disconnected");
         }
+
         private static void Server_OnServicePeerAuthenticated(Core.Server.Services.Service service, Core.Server.Services.Peer peer, Core.Game.XPlatformId userId)
         {
-
+            Log.Information($"[{service.Name}] client({peer.Address}:{peer.Port}) authenticated as account='{userId}' displayName='{peer.UserDisplayName}'");
         }
 
         private static void Registry_OnGameServerRegistered(Core.Server.Services.ServerDB.RegisteredGameServer gameServer)
         {
-            Info($"[{gameServer.Peer.Service.Name}] client({gameServer.Peer.Address}:{gameServer.Peer.Port}) registered game server (server_id={gameServer.ServerId}, region_symbol={gameServer.RegionSymbol}, version_lock={gameServer.VersionLock}, endpoint=<{gameServer.ExternalAddress}:{gameServer.Port}>)");
+            Log.Information($"[{gameServer.Peer.Service.Name}] client({gameServer.Peer.Address}:{gameServer.Peer.Port}) registered game server (server_id={gameServer.ServerId}, region_symbol={gameServer.RegionSymbol}, version_lock={gameServer.VersionLock}, endpoint=<{gameServer.ExternalAddress}:{gameServer.Port}>)");
         }
 
         private static void Registry_OnGameServerUnregistered(Core.Server.Services.ServerDB.RegisteredGameServer gameServer)
         {
-            Info($"[{gameServer.Peer.Service.Name}] client({gameServer.Peer.Address}:{gameServer.Peer.Port}) unregistered game server (server_id={gameServer.ServerId}, region_symbol={gameServer.RegionSymbol}, version_lock={gameServer.VersionLock}, endpoint=<{gameServer.ExternalAddress}:{gameServer.Port}>)");
-        }
-        private static void ServerDBService_OnGameServerRegistrationFailure(Peer peer, Core.Server.Messages.ServerDB.ERGameServerRegistrationRequest registrationRequest, string failureMessage)
-        {
-            Error($"[{peer.Service.Name}] client({peer.Address}:{peer.Port}) failed to register game server: \"{failureMessage}\"");
+            Log.Information($"[{gameServer.Peer.Service.Name}] client({gameServer.Peer.Address}:{gameServer.Peer.Port}) unregistered game server (server_id={gameServer.ServerId}, region_symbol={gameServer.RegionSymbol}, version_lock={gameServer.VersionLock}, endpoint=<{gameServer.ExternalAddress}:{gameServer.Port}>)");
         }
 
-        private static string getPacketDisplayString(Packet packet)
+        private static void ServerDBService_OnGameServerRegistrationFailure(Peer peer, Core.Server.Messages.ServerDB.ERGameServerRegistrationRequest registrationRequest, string failureMessage)
         {
-            // Add every message to our result.
-            string result = "";
-            for (int i = 0; i < packet.Count; i++)
-            {
-                if (i == packet.Count - 1)
-                    result += $"\t{packet[i]}";
-                else
-                    result += $"\t{packet[i]}\n";
-            }
-            return result;
+            Log.Error($"[{peer.Service.Name}] client({peer.Address}:{peer.Port}) failed to register game server: \"{failureMessage}\"");
         }
 
         private static void Server_OnServicePacketSent(Core.Server.Services.Service service, Core.Server.Services.Peer sender, Core.Server.Messages.Packet packet)
         {
-            Debug($"[{service.Name}] server->client({sender.Address}:{sender.Port}\n" + getPacketDisplayString(packet));
+            packet.ForEach(p => Log.Debug($"[{service.Name}] ({sender.Address}:{sender.Port}) SENT: " + p));
         }
 
         private static void Server_OnServicePacketReceived(Core.Server.Services.Service service, Core.Server.Services.Peer sender, Core.Server.Messages.Packet packet)
         {
-            Debug($"[{service.Name}] client({sender.Address}:{sender.Port})->server:\n" + getPacketDisplayString(packet));
-        }
-
-
-        private static void Error(string msg)
-        {
-            lock (_printLock)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine(msg);
-                Console.ResetColor();
-            }
-        }
-
-        private static void Warning(string msg)
-        {
-            lock (_printLock)
-            {
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine(msg);
-                Console.ResetColor();
-            }
-        }
-        private static void Info(string msg)
-        {
-            lock (_printLock)
-            {
-                Console.ResetColor();
-                Console.WriteLine(msg);
-            }
-        }
-
-        private static void Debug(string msg)
-        {
-            lock (_printLock)
-            {
-                Console.ForegroundColor = ConsoleColor.DarkCyan;
-                Console.WriteLine(msg);
-                Console.ResetColor();
-            }
+            packet.ForEach(p => Log.Debug($"[{service.Name}] ({sender.Address}:{sender.Port}) RECV: " + p));
         }
     }
 }
