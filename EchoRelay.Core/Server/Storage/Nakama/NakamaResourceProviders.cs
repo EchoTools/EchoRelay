@@ -313,7 +313,7 @@ namespace EchoRelay.Core.Server.Storage.Nakama
             // authenticate to the users account for a session
             try
             {
-                userSession = await Storage.Client.AuthenticateCustomAsync(userName, userName, false);
+                userSession = await Storage.Client.AuthenticateDeviceAsync(userName, create : false);
             }
             catch (ApiResponseException ex)
             {
@@ -419,7 +419,20 @@ namespace EchoRelay.Core.Server.Storage.Nakama
 
             var userName = _keySelectorFunc(key);
             // authenticate to the users account for a session
-            var userSession = await Storage.Client.AuthenticateCustomAsync(userName, userName, true);
+            ISession userSession;
+            try
+            {
+                // If the custom id exists, link the deviceId to that session
+                userSession = await Storage.Client.AuthenticateCustomAsync(userName, userName, create : false);
+                await client.LinkDeviceAsync(userSession, userName);
+            } catch (ApiResponseException ex)
+            {
+                userSession = await Storage.Client.AuthenticateDeviceAsync(userName, userName, create: true);
+            } finally
+            {
+                userSession = await Storage.Client.AuthenticateDeviceAsync(userName, userName, create: false);
+            }
+
             var userAccount = await Storage.Client.GetAccountAsync(userSession);
             // manually map the data onto the Nakama user
 
