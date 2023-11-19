@@ -1,4 +1,5 @@
 ﻿using CommandLine;
+using EchoRelay.API;
 using EchoRelay.Core.Server;
 using EchoRelay.Core.Server.Messages;
 using EchoRelay.Core.Server.Services;
@@ -168,8 +169,12 @@ namespace EchoRelay.Cli
                     Server.OnServicePacketReceived += Server_OnServicePacketReceived;
                 }
 
+                // Start the API server.
+                _ = new ApiServer(Server, new ApiSettings(new string[] { options.ServerDBApiKey ?? "" }));
+
                 // Start the server.
                 Server.Start().Wait();
+
             });
         }
 

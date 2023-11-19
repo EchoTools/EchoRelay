@@ -316,6 +316,14 @@ namespace EchoRelay.Core.Server
             service.OnPacketSent += Service_OnPacketSent;
             service.OnPacketReceived += Service_OnPacketReceived;
         }
+
+        public delegate void RelaySettingsUpdated();
+        public event RelaySettingsUpdated? OnRelaySettingsUpdated;
+        public void UpdateServerSettings(ServerSettings settings)
+        {
+            Settings = settings;
+            OnRelaySettingsUpdated?.Invoke();
+        }
         #endregion
 
         #region Event Handlers
