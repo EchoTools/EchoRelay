@@ -37,6 +37,11 @@ namespace EchoRelay.Core.Utils
             return MergeObjects(obj, JObject.FromObject(obj2));
         }
 
+        public static T? MergeObjects<T>(T obj, JObject obj2)
+        {
+            return MergeObjects(obj, obj2, _mergeSettings);
+        }
+
         /// <summary>
         /// Merges given <see cref="JObject"/>-compatible objects together.
         /// </summary>
@@ -44,7 +49,7 @@ namespace EchoRelay.Core.Utils
         /// <param name="obj">The first object to be merged into.</param>
         /// <param name="obj2">The second object to merge into the first.</param>
         /// <returns>Returns the merged object.</returns>
-        public static T? MergeObjects<T>(T obj, JObject obj2)
+        public static T? MergeObjects<T>(T obj, JObject obj2, JsonMergeSettings mergeSettings)
         {
             // If the first object is null, return the second object.
             if (obj == null)
@@ -52,7 +57,7 @@ namespace EchoRelay.Core.Utils
 
             // Merge both objects and return the result.
             JObject mergedObj = JObject.FromObject(obj);
-            mergedObj.Merge(obj2, _mergeSettings);
+            mergedObj.Merge(obj2, mergeSettings);
             return mergedObj.ToObject<T>();
         }
         #endregion

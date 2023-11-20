@@ -71,7 +71,7 @@ namespace EchoRelay.API.Controllers
                 }
 
                 Storage.Accounts.Set(account);
-                return Ok();
+                return Ok(JsonConvert.SerializeObject(account));
             }
             catch (Exception ex)
             {
@@ -79,8 +79,8 @@ namespace EchoRelay.API.Controllers
             }
         }
 
-        [HttpGet("{id}")]
-        public IActionResult AccountGet(string id)
+        [HttpGet("{accountId}")]
+        public IActionResult AccountGet(string accountId)
         {
             try
             {
@@ -89,7 +89,7 @@ namespace EchoRelay.API.Controllers
                     return StatusCode((int)HttpStatusCode.InternalServerError, "Storage is null");
                 }
 
-                var xPlatformId = XPlatformId.Parse(id);
+                var xPlatformId = XPlatformId.Parse(accountId);
                 if (xPlatformId == null)
                 {
                     return BadRequest("Invalid id");
@@ -101,7 +101,7 @@ namespace EchoRelay.API.Controllers
                     return NotFound("Account not found");
                 }
 
-                return Ok(account);
+                return Ok(JsonConvert.SerializeObject(account));
             }
             catch (Exception ex)
             {
@@ -109,8 +109,8 @@ namespace EchoRelay.API.Controllers
             }
         }
 
-        [HttpPost("{id}")]
-        public async Task<IActionResult> AccountPost(string id)
+        [HttpPost("{accountId}")]
+        public async Task<IActionResult> AccountPost(string accountId)
         {
             try
             {
@@ -119,7 +119,7 @@ namespace EchoRelay.API.Controllers
                     return StatusCode((int)HttpStatusCode.InternalServerError, "Storage is null");
                 }
 
-                var xPlatformId = XPlatformId.Parse(id);
+                var xPlatformId = XPlatformId.Parse(accountId);
                 if (xPlatformId == null)
                 {
                     return BadRequest("Invalid id");
@@ -144,7 +144,11 @@ namespace EchoRelay.API.Controllers
                     return BadRequest("Invalid account");
                 }
 
-                var mergedAccount = JsonUtils.MergeObjects(account, newAccount);
+                var mergedAccount = JsonUtils.MergeObjects(account, newAccount, new JsonMergeSettings
+                {
+                    MergeArrayHandling = MergeArrayHandling.Replace,
+                    MergeNullValueHandling = MergeNullValueHandling.Merge,
+                });
                 if (mergedAccount == null)
                 {
                     return BadRequest("Invalid account");
@@ -155,8 +159,8 @@ namespace EchoRelay.API.Controllers
                     return BadRequest("Invalid id");
                 }
 
-                Storage.Accounts.Set(account);
-                return Ok();
+                Storage.Accounts.Set(mergedAccount);
+                return Ok(JsonConvert.SerializeObject(mergedAccount));
             }
             catch (Exception ex)
             {
@@ -164,8 +168,8 @@ namespace EchoRelay.API.Controllers
             }
         }
 
-        [HttpDelete("{id}")]
-        public IActionResult AccountDelete(string id)
+        [HttpDelete("{accountId}")]
+        public IActionResult AccountDelete(string accountId)
         {
             try
             {
@@ -174,7 +178,7 @@ namespace EchoRelay.API.Controllers
                     return StatusCode((int)HttpStatusCode.InternalServerError, "Storage is null");
                 }
 
-                var xPlatformId = XPlatformId.Parse(id);
+                var xPlatformId = XPlatformId.Parse(accountId);
                 if (xPlatformId == null)
                 {
                     return BadRequest("Invalid id");
@@ -187,7 +191,7 @@ namespace EchoRelay.API.Controllers
                 }
 
                 Storage.Accounts.Delete(xPlatformId);
-                return Ok(account);
+                return Ok(JsonConvert.SerializeObject(account));
             }
             catch (Exception ex)
             {
