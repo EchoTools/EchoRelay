@@ -338,6 +338,7 @@ namespace EchoRelay.Core.Server.Storage.Nakama
             resource.Profile.Client.DisplayName = userAccount.User.DisplayName;
 
             // Check for the moderator group membership
+            resource.IsModerator = false;
             var result = await Storage.Client.ListGroupsAsync(session, ModeratorGroupName);
             if (result.Groups.Any())
             {
@@ -417,26 +418,27 @@ namespace EchoRelay.Core.Server.Storage.Nakama
             var client = Storage.Client;
             var session = await Storage.RefreshSessionAsync();
 
-            var userName = _keySelectorFunc(key);
+            var userId = _keySelectorFunc(key);
             // authenticate to the users account for a session
             ISession userSession;
             try
             {
-                // If the custom id exists, link the deviceId to that session
-                userSession = await Storage.Client.AuthenticateCustomAsync(userName, userName, create : false);
-                await client.LinkDeviceAsync(userSession, userName);
+                // If the custom id exists, link the deviceId to that session, and clear the custom
+                userSession = await Storage.Client.AuthenticateCustomAsync(userId, create : false);
+                await client.LinkDeviceAsync(userSession, userId);
+                await client.UnlinkCustomAsync(userSession, userId);
             } catch (ApiResponseException ex)
             {
-                userSession = await Storage.Client.AuthenticateDeviceAsync(userName, userName, create: true);
+                userSession = await Storage.Client.AuthenticateDeviceAsync(userId, userId, create: true);
             } finally
             {
-                userSession = await Storage.Client.AuthenticateDeviceAsync(userName, userName, create: false);
+                userSession = await Storage.Client.AuthenticateDeviceAsync(userId, userId, create: false);
             }
 
             var userAccount = await Storage.Client.GetAccountAsync(userSession);
             // manually map the data onto the Nakama user
 
-            await Storage.Client.UpdateAccountAsync(userSession, userName, displayName: resource.Profile.Client.DisplayName);
+            await Storage.Client.UpdateAccountAsync(userSession, userId, displayName: resource.Profile.Client.DisplayName);
 
 
             // The only top level members we need are the account hash and salt
