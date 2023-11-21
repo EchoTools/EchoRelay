@@ -30,10 +30,7 @@ namespace EchoRelay.Core.Server.Storage.Nakama
         private NakamaResourceProvider<LoginSettingsResource> _loginSettings;
 
         public override ResourceProvider<SymbolCache> SymbolCache => _symbolCache;
-
         private ResourceProvider<SymbolCache> _symbolCache;
-
-        private readonly object _symbolCacheLock = new object();
 
         public Nk.Client Client;
         private Session _session;
@@ -41,14 +38,9 @@ namespace EchoRelay.Core.Server.Storage.Nakama
         public async Task<Nk.Session> RefreshSessionAsync()
         {
             if (_session == null || _session.IsExpired)
-            {
-                _session = (Nk.Session)await Client.AuthenticateDeviceAsync(RelayId, create: true);
-            } else
-            {
-                _session = (Nk.Session)await Client.SessionRefreshAsync(_session);
-            }
-            
-            return _session;
+                return (Nk.Session)await Client.AuthenticateDeviceAsync(RelayId, create: true);
+            else
+                return (Nk.Session)await Client.SessionRefreshAsync(_session);
         }
         public string RelayId { get; }
 
@@ -59,13 +51,13 @@ namespace EchoRelay.Core.Server.Storage.Nakama
             RelayId = relayId;
 
             // Create our resource containers
-            _accessControlList = new NakamaResourceProvider<AccessControlListResource>(this, "relayConfig", "accessControlLists");
-            _channelInfo = new NakamaResourceProvider<ChannelInfoResource>(this, "channelInfo", "channelInfo");
-            _accounts = new NakamaResourceCollectionProvider<XPlatformId, AccountResource>(this, "userAccounts",  x => $"{x}");
-            _configs = new NakamaResourceCollectionProvider<(string Type, string Identifier), ConfigResource>(this, "serverConfigs", x => $"{x.Identifier}");
-            _documents = new NakamaResourceCollectionProvider<(string Type, string Language), DocumentResource>(this, "serverDocuments", x => $"{x.Type}_{x.Language}");
-            _loginSettings = new NakamaResourceProvider<LoginSettingsResource>(this, "loginConfig", "loginSettings");
-            _symbolCache = new NakamaResourceProvider<SymbolCache>(this, "symbolCache", "symbolCache");
+            _accessControlList = new NakamaResourceProvider<AccessControlListResource>(this, "AccessControlListResource", "AccessControlList");
+            _channelInfo = new NakamaResourceProvider<ChannelInfoResource>(this, "ChannelInfo", "channelInfo");
+            _accounts = new NakamaResourceCollectionProvider<XPlatformId, AccountResource>(this, "Account",  x => $"{x}");
+            _configs = new NakamaResourceCollectionProvider<(string Type, string Identifier), ConfigResource>(this, "Config", x => $"{x.Identifier}");
+            _documents = new NakamaResourceCollectionProvider<(string Type, string Language), DocumentResource>(this, "Document", x => $"{x.Type}_{x.Language}");
+            _loginSettings = new NakamaResourceProvider<LoginSettingsResource>(this, "LoginSettings", "loginSettings");
+            _symbolCache = new NakamaResourceProvider<SymbolCache>(this, "SymbolCache", "symbolCache");
         }
 
         public static async Task<NakamaServerStorage> ConnectNakamaStorageAsync(string scheme, string host, int port, string serverKey, string deviceId)
