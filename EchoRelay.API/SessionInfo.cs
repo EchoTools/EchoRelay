@@ -39,7 +39,7 @@ namespace EchoRelay.API
         {
             if (!gameServer.SessionStarted)
             {
-                throw new Exception("Session has not started.");
+                throw new Exception("No session found.");
             }
 
             ServerId = gameServer.ServerId;
