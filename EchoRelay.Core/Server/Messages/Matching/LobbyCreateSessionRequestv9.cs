@@ -17,8 +17,10 @@ namespace EchoRelay.Core.Server.Messages.Matching
         /// </summary>
         public override long MessageTypeSymbol => 6456590782678944787;
 
-        // TODO
-        public ulong Unk0;
+        /// <summary>
+        ///  A symbol representing the region requested for the session.
+        /// </summary>
+        public long RegionSymbol;
 
         /// <summary>
         /// The version of the client, prevents mismatches in matching.
@@ -81,7 +83,7 @@ namespace EchoRelay.Core.Server.Messages.Matching
         /// </summary>
         public LobbyCreateSessionRequestv9()
         {
-            Unk0 = 0;
+            RegionSymbol = 0;
             VersionLock = 0;
             GameTypeSymbol = -1;
             LevelSymbol = -1;
@@ -104,7 +106,7 @@ namespace EchoRelay.Core.Server.Messages.Matching
         /// <param name="io">The stream to read/write data from/to.</param>
         public override void Stream(StreamIO io)
         {
-            io.Stream(ref Unk0);
+            io.Stream(ref RegionSymbol);
             io.Stream(ref VersionLock);
             io.Stream(ref GameTypeSymbol);
             io.Stream(ref LevelSymbol);
@@ -133,7 +135,7 @@ namespace EchoRelay.Core.Server.Messages.Matching
         public override string ToString()
         {
             return $"{GetType().Name}(" +
-                $"unk0={Unk0}, " +
+                $"RegionSymbol={RegionSymbol}, " +
                 $"version_lock={VersionLock}, " +
                 $"game_type={GameTypeSymbol}, " +
                 $"level={LevelSymbol}, " +

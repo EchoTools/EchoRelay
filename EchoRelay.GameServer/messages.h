@@ -47,7 +47,7 @@ struct ERLobbyRegistrationRequest
 	UINT64 serverId;
 	UINT32 internalIp;
 	UINT16 port;
-	BYTE padding[4];
+	BYTE padding[10]; // Was 4, but somehow compiled into 10, so we'll just go with it and set just in case it compiles differently in the future.
 	EchoVR::SymbolId regionId;
 	EchoVR::SymbolId versionLock;
 };

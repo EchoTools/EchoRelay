@@ -60,7 +60,7 @@ namespace EchoRelay.Core.Server.Services.Matching
         private async Task ProcessCreateSessionRequestv9(Peer sender, LobbyCreateSessionRequestv9 request)
         {
             // Set the matching data for our user to provide context to matching operations moving forward.
-            sender.SetSessionData(MatchingSession.FromCreateSessionCriteria(request.UserId, request.ChannelUUID, request.GameTypeSymbol, request.LevelSymbol, request.LobbyType, (TeamIndex)request.TeamIndex, request.SessionSettings));
+            sender.SetSessionData(MatchingSession.FromCreateSessionCriteria(request.UserId, request.ChannelUUID, request.GameTypeSymbol, request.LevelSymbol, request.LobbyType, (TeamIndex)request.TeamIndex, request.SessionSettings,request.RegionSymbol));
 
             // Process the underlying request.
             await ProcessMatchingSession(sender, request.Session, request.UserId);
@@ -141,6 +141,17 @@ namespace EchoRelay.Core.Server.Services.Matching
                 return;
             }
 
+            if (matchingSession.GameTypeSymbol != null)
+            {
+                string? gameTypeName = Server.SymbolCache.GetName(matchingSession.GameTypeSymbol.Value);
+                bool isAIMatch = gameTypeName?.EndsWith("_ai", StringComparison.OrdinalIgnoreCase) ?? false;
+                if (isAIMatch)
+                {
+                    await SendLobbySessionFailure(sender, LobbySessionFailureErrorCode.BadRequest, "AI matches are not allowed");
+                    return;
+                }
+            }
+
             // Send the status to the user.
             // TODO: This should be a response to LobbyMatchmakerStatusRequest and should be relocated.
             //  That request is sent along with this request we are currently processing, so it is technically fine to respond here (for the client), but it's just ugly in terms of code correctness.
@@ -165,6 +176,10 @@ namespace EchoRelay.Core.Server.Services.Matching
             // This is a create lobby, or find lobby request. We will try to find an existing server that matches the request.
             // Filter game servers, produce ping request endpoint data.
             // We limit the amount to 100, to avoid the response hitting the max packet size.
+            if(matchingSession.RegionSymbol != null)
+            {
+                Console.Write(matchingSession.RegionSymbol);
+            }
             var gameServers = Server.ServerDBService.Registry.FilterGameServers(
                 findMax: 100,
                 sessionId: matchingSession.LobbyId,
@@ -174,7 +189,8 @@ namespace EchoRelay.Core.Server.Services.Matching
                 locked: false,
                 lobbyTypes: matchingSession.SearchLobbyTypes,
                 requestedTeam: matchingSession.TeamIndex,
-                unfilledServerOnly: true
+                unfilledServerOnly: true,
+                regionSymbol: matchingSession.RegionSymbol
             );
 
             // If we only have one game server, immediately connect the peer. Otherwise, perform a ping request to determine the lowest ping server.
@@ -267,15 +283,27 @@ namespace EchoRelay.Core.Server.Services.Matching
                     unfilledServerOnly: true
                 );
 
+
+                // Determine if the user is trying to join a private match.
+                bool isPrivateMatch = false;
+                if (matchingSession.GameTypeSymbol != null)
+                {
+                    string? gameTypeName;
+                    gameTypeName = Server.SymbolCache.GetName(matchingSession.GameTypeSymbol.Value);
+                    isPrivateMatch = gameTypeName?.EndsWith("_private", StringComparison.OrdinalIgnoreCase) ?? false;
+                }
+
                 // All servers should either have no session started, or match the criteria we filtered for.
                 // Depending on our matching strategy, we will first sort by population or ping, followed by the latter.
                 // The most optimal game server will be selected.
-                if (Server.Settings.FavorPopulationOverPing)
+                if (Server.Settings.FavorPopulationOverPing && !isPrivateMatch)
                 {
                     // Select the game server which is most full.
                     selectedGameServer = gameServers.MaxBy(x => (float)x.SessionPlayerCount / x.SessionPlayerLimits.TotalPlayerLimit);
+                    if(selectedGameServer?.SessionPlayerCount == 0) selectedGameServer = null;
                 }
-                else
+                // If no game servers were found, or we are trying to join a private match, select the lowest ping server.
+                if(selectedGameServer == null)
                 {
                     // Sort the game servers with preference of filters: session started, lowest ping, highest player count.
                     var sortedGameServers = gameServers.Select(gameServer =>

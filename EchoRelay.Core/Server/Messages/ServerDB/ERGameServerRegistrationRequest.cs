@@ -57,8 +57,8 @@ namespace EchoRelay.Core.Server.Messages.ServerDB
             io.Stream(ref ServerId);
             io.Stream(ref InternalAddress, ByteOrder.BigEndian);
             io.Stream(ref Port);
-            ushort pad2 = 0; // 2 bytes of padding
-            io.Stream(ref pad2);
+            byte[] pad10 = new byte[10]; // Was 2 bytes, but we need 10 bytes to align with the server's struct.
+            io.Stream(ref pad10);
             io.Stream(ref RegionSymbol);
             io.Stream(ref VersionLock);
         }

@@ -20,8 +20,8 @@ namespace EchoRelay.Core.Server.Services.ServerDB
         {
             // Create a lookup for each gametype.
             _playerLimits = new ConcurrentDictionary<string, PlayerLimits>(StringComparer.OrdinalIgnoreCase);
-            _playerLimits["echo_arena"] = new PlayerLimits(16, 8); // 4 vs 4
-            _playerLimits["echo_combat"] = new PlayerLimits(16, 8); // 4 vs 4
+            _playerLimits["echo_arena"] = new PlayerLimits(15, 8); // 4 vs 4
+            _playerLimits["echo_combat"] = new PlayerLimits(15, 8); // 4 vs 4
 
             // Note: Private DOES NOT need to be enforced, since you can only join with -lobbyid, and players
             // are already locked out at 5v5 (but spectators are allowed), we won't matchmake you to a private.
@@ -34,7 +34,7 @@ namespace EchoRelay.Core.Server.Services.ServerDB
             // and player counts including bots would differ, especially as bots are added by game server.
 
             // Note: Other gametypes don't need to enforce a reserved player count.
-            DefaultLimits = new PlayerLimits(16);
+            DefaultLimits = new PlayerLimits(15);
         }
         /// <summary>
         /// Obtain the player limits for a given gametype.
