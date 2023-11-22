@@ -41,7 +41,7 @@ namespace EchoRelay.API
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
-
+            app.UseMiddleware<ApiAuthentication>();
             app.UseAuthorization();
             app.MapControllers();
 

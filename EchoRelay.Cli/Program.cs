@@ -83,6 +83,9 @@ namespace EchoRelay.Cli
             [Option("disable-cache", Required = false, Default = false, HelpText = "Disables the file cache. Edits to JSON files will be immediately effective.")]
             public bool DisableCache { get; set; } = true;
 
+            [Option("enable-api", Required = false, Default = false, HelpText = "Enables the API server.")]
+            public bool EnableApi { get; set; } = true;
+
         }
 
         /// <summary>
@@ -169,8 +172,11 @@ namespace EchoRelay.Cli
                     Server.OnServicePacketReceived += Server_OnServicePacketReceived;
                 }
 
-                // Start the API server.
-                _ = new ApiServer(Server, new ApiSettings(new string[] { options.ServerDBApiKey ?? "" }));
+                if (Options.EnableApi)
+                {
+                    // Start the API server.
+                    _ = new ApiServer(Server, new ApiSettings(apiKey: options.ServerDBApiKey));
+                }
 
                 // Start the server.
                 Server.Start().Wait();

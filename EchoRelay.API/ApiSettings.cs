@@ -2,11 +2,9 @@
 {
     public class ApiSettings
     {
-        public string[] ApiKeys { get; }
-
-        public ApiSettings(string[] apiKeys)
-        {
-            ApiKeys = apiKeys;
+        public string? ApiKey;
+        public ApiSettings(string? apiKey) {
+            ApiKey = apiKey;
         }
     }
 }
