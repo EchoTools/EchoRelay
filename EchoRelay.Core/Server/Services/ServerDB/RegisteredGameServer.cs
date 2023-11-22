@@ -143,13 +143,13 @@ namespace EchoRelay.Core.Server.Services.ServerDB
         /// </summary>
         public byte SessionPlayerCount
         {
-            get { return (byte)_playerSessions.Count; }
+            get { return (byte)SessionPlayerSessions.Count; }
         }
 
         /// <summary>
         /// Represents the active player sessions in the server.
         /// </summary>
-        private Dictionary<Guid, (Peer peer, TeamIndex requestedTeam)> _playerSessions;
+        public Dictionary<Guid, (Peer peer, TeamIndex requestedTeam)> SessionPlayerSessions;
       
         /// <summary>
         /// A lock used for asynchronous/awaitable concurrent access to this object.
@@ -201,7 +201,7 @@ namespace EchoRelay.Core.Server.Services.ServerDB
             _registrationRequest = registrationRequest;
             SessionLobbyType = ERGameServerStartSession.LobbyType.Unassigned;
             SessionPlayerLimits = GameTypePlayerLimits.DefaultLimits;
-            _playerSessions = new Dictionary<Guid, (Peer, TeamIndex)>();
+            SessionPlayerSessions = new Dictionary<Guid, (Peer, TeamIndex)>();
             _accessLock = new AsyncLock();
         }
         #endregion
@@ -214,7 +214,7 @@ namespace EchoRelay.Core.Server.Services.ServerDB
                 return true;
 
             // Otherwise check availability.
-            return SessionPlayerLimits.CheckTeamAvailability(_playerSessions.Values.Select(x => x.requestedTeam).ToArray(), requestedTeam);
+            return SessionPlayerLimits.CheckTeamAvailability(SessionPlayerSessions.Values.Select(x => x.requestedTeam).ToArray(), requestedTeam);
         }
         public async Task StartSession(XPlatformId requester, ERGameServerStartSession.LobbyType lobbyType, Guid channel, long? gameTypeSymbol, long? levelSymbol, ERGameServerStartSession.SessionSettings? settings)
         {
@@ -242,7 +242,7 @@ namespace EchoRelay.Core.Server.Services.ServerDB
             SessionLevelSymbol = levelSymbol;
             SessionPlayerLimits = GameTypePlayerLimits.DefaultLimits;
 
-            _playerSessions.Clear();
+            SessionPlayerSessions.Clear();
             SessionLocked = false;
 
             // Merge session settings information and send a "start session" message to the game server.
@@ -435,7 +435,7 @@ namespace EchoRelay.Core.Server.Services.ServerDB
                         await matchingPeer.Send(new LobbyPlayerSessionsSuccessv3(0xFF, matchingSession.UserId, playerSessions[0], (short)matchingSession.TeamIndex, 0, 0));
 
                         // Add the pending player session associated to this peer.
-                        _playerSessions[playerSessions[0]] = (matchingPeer, matchingSession.TeamIndex);
+                        SessionPlayerSessions[playerSessions[0]] = (matchingPeer, matchingSession.TeamIndex);
                     }
 
                 }
@@ -466,7 +466,7 @@ namespace EchoRelay.Core.Server.Services.ServerDB
             Peer? peer = null;
             await _accessLock.ExecuteLocked(() =>
             {
-                if (_playerSessions.TryGetValue(playerSession, out var playerInfo))
+                if (SessionPlayerSessions.TryGetValue(playerSession, out var playerInfo))
                     peer = playerInfo.peer;
                 return Task.CompletedTask;
             });
@@ -479,7 +479,7 @@ namespace EchoRelay.Core.Server.Services.ServerDB
             var playersInfo = Array.Empty<(Guid playerSession, Peer? peer)>();
             await _accessLock.ExecuteLocked(() =>
             {
-                playersInfo = _playerSessions.AsEnumerable().Select(x => (x.Key, (Peer?)x.Value.peer)).ToArray();
+                playersInfo = SessionPlayerSessions.AsEnumerable().Select(x => (x.Key, (Peer?)x.Value.peer)).ToArray();
                 return Task.CompletedTask;
             });
             return playersInfo;
@@ -505,7 +505,7 @@ namespace EchoRelay.Core.Server.Services.ServerDB
                 for (int i = 0; i < addedPlayersInfo.Length; i++)
                 {
                     var playerSession = playerSessions[i];
-                    if (_playerSessions.TryGetValue(playerSession, out var playerInfo))
+                    if (SessionPlayerSessions.TryGetValue(playerSession, out var playerInfo))
                         addedPlayersInfo[i] = (playerSessions[i], playerInfo.peer);
                 }
             });
@@ -530,11 +530,11 @@ namespace EchoRelay.Core.Server.Services.ServerDB
             await _accessLock.ExecuteLocked(() =>
             {
                 // Try to get the existing peer for this player session.
-                if(_playerSessions.TryGetValue(playerSession, out var playerInfo))
+                if(SessionPlayerSessions.TryGetValue(playerSession, out var playerInfo))
                     peer = playerInfo.peer;
 
                 // Remove this player session from our lookup if it exists.
-                _playerSessions.Remove(playerSession);
+                SessionPlayerSessions.Remove(playerSession);
 
                 // If we hit 0 players, expect end of session, set server as not ready to match.
                 if (SessionStarted && SessionPlayerCount == 0)
@@ -559,7 +559,7 @@ namespace EchoRelay.Core.Server.Services.ServerDB
                 SessionLevelSymbol = null;
                 SessionLocked = false;
                 SessionPlayerLimits = GameTypePlayerLimits.DefaultLimits;
-                _playerSessions.Clear();
+                SessionPlayerSessions.Clear();
 
                 return Task.CompletedTask;
             });

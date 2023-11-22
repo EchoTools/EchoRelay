@@ -453,7 +453,8 @@ namespace EchoRelay.Core.Server.Services.Login
             // Verify the session details provided
             if (!CheckUserSessionValid(request.Session, request.UserId))
             {
-                // TODO: Send UpdateProfileFailure(?)
+                await sender.Send(new UpdateProfileFailure(request.UserId, HttpStatusCode.BadRequest, "Authentication failed"));
+                await sender.Send(new TcpConnectionUnrequireEvent());
                 return;
             }
 
@@ -461,14 +462,16 @@ namespace EchoRelay.Core.Server.Services.Login
             AccountResource? account = Storage.Accounts.Get(request.UserId);
             if (account == null)
             {
-                // TODO: Send UpdateProfileFailure(?)
+                await sender.Send(new UpdateProfileFailure(request.UserId, HttpStatusCode.BadRequest, "Failed to obtain profile"));
+                await sender.Send(new TcpConnectionUnrequireEvent());
                 return;
             }
 
             // Verify the account identifier did not change (avoids overwriting another profile in storage, as it is the storage key).
             if (request.ClientProfile.XPlatformId != request.UserId.ToString())
             {
-                // TODO: Send UpdateProfileFailure(?)
+                await sender.Send(new UpdateProfileFailure(request.UserId, HttpStatusCode.BadRequest, "Invalid account identifier"));
+                await sender.Send(new TcpConnectionUnrequireEvent());
                 return;
             }
 

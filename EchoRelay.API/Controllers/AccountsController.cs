@@ -1,4 +1,7 @@
 ﻿using EchoRelay.Core.Game;
+using EchoRelay.Core.Server.Messages.Common;
+using EchoRelay.Core.Server.Messages.Login;
+using EchoRelay.Core.Server.Services.Login;
 using EchoRelay.Core.Server.Storage;
 using EchoRelay.Core.Server.Storage.Types;
 using EchoRelay.Core.Utils;
@@ -14,6 +17,7 @@ namespace EchoRelay.API.Controllers
     public class AccountsController : ControllerBase
     {
         static ServerStorage? Storage => ApiServer.Instance?.RelayServer.Storage;
+        static LoginService? LoginService => ApiServer.Instance?.RelayServer.LoginService;
 
         [HttpGet]
         public IActionResult Get(int pageNumber = 1, int pageSize = 10)
@@ -68,6 +72,17 @@ namespace EchoRelay.API.Controllers
                 if (xPlatformId == null)
                 {
                     return BadRequest("Invalid id");
+                }
+
+                if (LoginService != null)
+                {
+                    foreach (var peer in LoginService.Peers)
+                    {
+                        if (peer.UserId != xPlatformId) continue;
+
+                        await peer.Send(new LoggedInUserProfileSuccess(xPlatformId, account.Profile));
+                        await peer.Send(new TcpConnectionUnrequireEvent());
+                    }
                 }
 
                 Storage.Accounts.Set(account);
@@ -159,6 +174,17 @@ namespace EchoRelay.API.Controllers
                     return BadRequest("Invalid id");
                 }
 
+                if (LoginService != null)
+                {
+                    foreach (var peer in LoginService.Peers)
+                    {
+                        if (peer.UserId != xPlatformId) continue;
+
+                        await peer.Send(new LoggedInUserProfileSuccess(xPlatformId, mergedAccount.Profile));
+                        await peer.Send(new TcpConnectionUnrequireEvent());
+                    }
+                }
+
                 Storage.Accounts.Set(mergedAccount);
                 return Ok(JsonConvert.SerializeObject(mergedAccount));
             }
@@ -189,6 +215,17 @@ namespace EchoRelay.API.Controllers
                 {
                     return NotFound("Account not found");
                 }
+
+                // TODO: Disconnect peer
+                /*if (LoginService != null)
+                {
+                    foreach (var peer in LoginService.Peers)
+                    {
+                        if (peer.UserId != xPlatformId) continue;
+
+                        await peer.
+                    }
+                }*/
 
                 Storage.Accounts.Delete(xPlatformId);
                 return Ok(JsonConvert.SerializeObject(account));
