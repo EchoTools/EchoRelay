@@ -1,4 +1,5 @@
 using EchoRelay.Core.Server;
+using Serilog;
 
 namespace EchoRelay.API
 {
@@ -32,8 +33,13 @@ namespace EchoRelay.API
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
+            builder.Host.UseSerilog();
+
             var app = builder.Build();
             app.UseCors("AllowAll");
+
+            // Reduce logging noise
+            app.UseSerilogRequestLogging();
 
             // Configure the HTTP request pipeline.
             //if (app.Environment.IsDevelopment())

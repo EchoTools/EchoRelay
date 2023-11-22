@@ -7,6 +7,7 @@ using EchoRelay.Core.Server.Storage.Filesystem;
 using EchoRelay.Core.Utils;
 using Newtonsoft.Json;
 using Serilog;
+using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
 
 namespace EchoRelay.Cli
@@ -180,7 +181,7 @@ namespace EchoRelay.Cli
             if (options.LogFilePath != null)
             {
                 logConfig.WriteTo.Async(a => a.File(
-                    path: Options.LogFilePath,
+                    path: options.LogFilePath,
                     outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}"));
             }
 
@@ -189,6 +190,10 @@ namespace EchoRelay.Cli
                 : options.Debug
                     ? logConfig.MinimumLevel.Debug()
                     : logConfig.MinimumLevel.Information();
+
+            // reduce the noise of the API Server
+            logConfig.MinimumLevel.Override("Microsoft.AspNetCore",
+                options.Verbose ? LogEventLevel.Debug : LogEventLevel.Warning);
 
             Log.Logger = logConfig.CreateLogger();
         }
