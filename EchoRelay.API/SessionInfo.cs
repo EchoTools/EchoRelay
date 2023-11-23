@@ -33,7 +33,10 @@ namespace EchoRelay.API
         public bool Locked { get; set; }
 
         [JsonProperty("playerSessions")]
-        public Dictionary<string, (string peer, short team)> PlayerSessions { get; set; }
+        public Dictionary<string, string> PlayerSessions { get; set; }
+
+        [JsonProperty("teamSessions")]
+        public Dictionary<string, short> TeamSessions { get; set; }
 
         public SessionInfo(RegisteredGameServer gameServer)
         {
@@ -51,11 +54,13 @@ namespace EchoRelay.API
             PlayerLimit = gameServer.SessionPlayerLimits.TotalPlayerLimit;
             ActivePlayerLimit = gameServer.SessionPlayerLimits.FixedActiveGameParticipantTarget;
             Locked = gameServer.SessionLocked;
-            PlayerSessions = new Dictionary<string, (string peer, short team)>();
+            PlayerSessions = new Dictionary<string, string>();
+            TeamSessions = new Dictionary<string,  short>();
 
             foreach (var player in gameServer.SessionPlayerSessions)
             {
-                PlayerSessions.Add(player.Key.ToString(), (player.Value.peer.UserId.ToString(), (short)player.Value.requestedTeam));
+                PlayerSessions.Add(player.Key.ToString(), player.Value.peer.UserId.ToString());
+                TeamSessions.Add(player.Key.ToString(), (short)player.Value.requestedTeam);
             }
         }
     }
