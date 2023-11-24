@@ -15,6 +15,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "common", "common", "{082AAA
 	ProjectSection(SolutionItems) = preProject
 		common\echovr.h = common\echovr.h
 		common\echovrunexported.h = common\echovrunexported.h
+		common\Nakama.dll = common\Nakama.dll
 		common\pch.h = common\pch.h
 	EndProjectSection
 EndProject
@@ -29,6 +30,7 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EchoRelay.Cli", "EchoRelay.Cli\EchoRelay.Cli.csproj", "{550FA55D-3F67-46C0-8173-6ABBCF58D1C0}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EchoRelay.API", "EchoRelay.API\EchoRelay.API.csproj", "{02235A19-616E-413D-A4F2-0B02F2950DED}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EchoRelay.Nakama", "EchoRelay.Nakama\EchoRelay.Nakama.csproj", "{517265B8-6BE9-4F96-8328-B772490F3F6E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -94,6 +96,14 @@ Global
 		{02235A19-616E-413D-A4F2-0B02F2950DED}.Release|Any CPU.Build.0 = Release|Any CPU
 		{02235A19-616E-413D-A4F2-0B02F2950DED}.Release|x64.ActiveCfg = Release|Any CPU
 		{02235A19-616E-413D-A4F2-0B02F2950DED}.Release|x64.Build.0 = Release|Any CPU
+		{517265B8-6BE9-4F96-8328-B772490F3F6E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{517265B8-6BE9-4F96-8328-B772490F3F6E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{517265B8-6BE9-4F96-8328-B772490F3F6E}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{517265B8-6BE9-4F96-8328-B772490F3F6E}.Debug|x64.Build.0 = Debug|Any CPU
+		{517265B8-6BE9-4F96-8328-B772490F3F6E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{517265B8-6BE9-4F96-8328-B772490F3F6E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{517265B8-6BE9-4F96-8328-B772490F3F6E}.Release|x64.ActiveCfg = Release|Any CPU
+		{517265B8-6BE9-4F96-8328-B772490F3F6E}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
