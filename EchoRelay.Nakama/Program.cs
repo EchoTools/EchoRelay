@@ -145,7 +145,7 @@ namespace EchoRelay.Nakama
                 }
                 else
                 {
-                    _relayId = Regex.Replace(_relayId, "^(?:RLY-)?(?<id>[-A-z0-9_]+)", "RLY-${id}");
+                    _relayId = Regex.Replace(_relayId, "^(?<id>[-A-z0-9_]+)", "RELAY:${id}");
                     Log.Information($"Authenticating with relayId: {_relayId}");
                 }
 
