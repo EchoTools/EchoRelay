@@ -114,9 +114,10 @@ namespace EchoRelay.Core.Server.Storage.Filesystem
 
         protected override void OpenInternal()
         {
-            // If the directory doesn't exist, exit
+            // If the directory doesn't exist, create it.
             if (!Directory.Exists(ResourceDirectory))
-                return;
+                Directory.CreateDirectory(ResourceDirectory);
+
 
             // Create a set of verified keys/paths, to ensure we don't have duplicate keys.
             Dictionary<K, string> verifiedPaths = new Dictionary<K, string>();
