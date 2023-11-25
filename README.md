@@ -121,6 +121,21 @@ As the name suggests, central services are the main central endpoint which all c
 	- For more command options, run `EchoRelay.Cli --help` or read the project's [README](./EchoRelay.Cli/README.md).
 2. When the server starts, it should output some information such as a service config. Either copy this, or use the `--outputconfig` argument to save it to a file.
 
+**Option 3: Using the Dockerfile**
+1. Clone this repository to any system running a Docker daemon
+2. Create a path on your system for the EchoRelayCli config files to be stored ex. `/home/user/echorelay/echoconfig`
+3. Run the following docker commands to build and deploy the image:
+
+```
+docker build -t echotools/echorelay .
+docker run -it \
+--net=bridge \
+-h echorelaycli \
+--name EchoRelayCLI \
+-v /home/user/echorelay/echoconfig:/echorelay/echoconfig \
+-d echotools/echorelay
+```
+Note: Adjust the flags in the entrypoint.sh as applicable or as needed referring to the project's [README](./EchoRelay.Cli/README.md) as needed to customize your deployment. (Ex: Add the `--outputconfig` argument to save the game client config.json to a file.)
 
 **Port forwarding**
 - Finally, port forward the TCP port you configured for `EchoRelay.App` or `EchoRelay.Cli` on your router (and Windows or software-based firewalls, if enabled).
