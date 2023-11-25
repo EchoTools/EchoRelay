@@ -153,6 +153,7 @@ namespace EchoRelay.Core.Server.Services.Login
                 {
                     dynamic? logJson = JsonConvert.DeserializeObject(log);
 
+
                     if (logJson == null) continue;
                     if (logJson["message"] != "CUSTOMIZATION_METRICS_PAYLOAD") continue;
                     if (logJson["[event_type]"] != "item_equipped") continue;
@@ -231,6 +232,7 @@ namespace EchoRelay.Core.Server.Services.Login
                 }
                 catch (Exception e)
                 {
+                    continue;
                 }
             }
         }
