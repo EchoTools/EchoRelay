@@ -26,7 +26,7 @@ namespace EchoRelay.Core.Server.Services
         /// <summary>
         /// The persistent storage layer for the parent <see cref="Server"/>.
         /// </summary>
-        public ServerStorage Storage
+        public IServerStorage Storage
         {
             get
             {

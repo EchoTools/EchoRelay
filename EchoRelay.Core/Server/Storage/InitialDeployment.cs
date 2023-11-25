@@ -8,12 +8,12 @@ namespace EchoRelay.Core.Server.Storage
 {
     public abstract class InitialDeployment
     {
-        public static void DeployAccessControlList(ServerStorage storage)
+        public static void DeployAccessControlList(IServerStorage storage)
         {
             // Update the access control list.
             storage.AccessControlList.Set(new AccessControlListResource(allowRules: new string[] {"*"}, disallowRules: Array.Empty<string>()));
         }
-        public static void DeploySymbolCache(ServerStorage storage, string? gameDirectory = null)
+        public static void DeploySymbolCache(IServerStorage storage, string? gameDirectory = null)
         {
             // Obtain our symbol cache
             SymbolCache symbolCache = new SymbolCache();
@@ -71,7 +71,7 @@ namespace EchoRelay.Core.Server.Storage
             // Update the symbol cache.
             storage.SymbolCache.Set(symbolCache);
         }
-        public static void DeployLoginSettings(ServerStorage storage)
+        public static void DeployLoginSettings(IServerStorage storage)
         {
             // Create new login settings. The default values will be sufficient for most of this.
             // We create a config data entry pointing to each of our config resources.
@@ -84,7 +84,7 @@ namespace EchoRelay.Core.Server.Storage
             // Update our login settings in storage
             storage.LoginSettings.Set(loginSettings);
         }
-        public static void DeployChannelInfo(ServerStorage storage)
+        public static void DeployChannelInfo(IServerStorage storage)
         {
             // Create a new channel info
             ChannelInfoResource channelInfo = new ChannelInfoResource(
@@ -137,7 +137,7 @@ namespace EchoRelay.Core.Server.Storage
             // Update our channel info in storage.
             storage.ChannelInfo.Set(channelInfo);
         }
-        public static void DeployConfigs(ServerStorage storage)
+        public static void DeployConfigs(IServerStorage storage)
         {
             // Add all relevant resources.
 
@@ -171,7 +171,7 @@ namespace EchoRelay.Core.Server.Storage
 ")!);
             #endregion
         }
-        public static void DeployDocuments(ServerStorage storage)
+        public static void DeployDocuments(IServerStorage storage)
         {
             // Create our document resources.
             EulaDocumentResource eula = new EulaDocumentResource
@@ -198,7 +198,7 @@ namespace EchoRelay.Core.Server.Storage
             DocumentResource documentResource = JObject.FromObject(eula)?.ToObject<DocumentResource>()!;
             storage.Documents.Set(documentResource);
         }
-        public static void PerformInitialDeployment(ServerStorage storage, string? gameDirectory = null, bool clearExistingAccounts = false)
+        public static void PerformInitialDeployment(IServerStorage storage, string? gameDirectory = null, bool clearExistingAccounts = false)
         {
             DeployAccessControlList(storage);
             DeploySymbolCache(storage, gameDirectory);

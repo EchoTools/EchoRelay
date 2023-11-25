@@ -39,7 +39,7 @@ namespace EchoRelay.Core.Server
         /// <summary>
         /// The persistent storage layer for the server.
         /// </summary>
-        public ServerStorage Storage { get; set; }
+        public IServerStorage Storage { get; set; }
 
         /// <summary>
         /// A cache of symbols to use during server operations.
@@ -142,7 +142,7 @@ namespace EchoRelay.Core.Server
         /// Initializes a new <see cref="Server"/> with the provided arguments.
         /// </summary>
         /// <param name="port">The port to bind the websocket server to.</param>
-        public Server(ServerStorage storage, ServerSettings settings)
+        public Server(IServerStorage storage, ServerSettings settings)
         {
             // Set our properties.
             Storage = storage;

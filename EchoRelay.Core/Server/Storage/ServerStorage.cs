@@ -4,7 +4,7 @@ using EchoRelay.Core.Server.Storage.Types;
 
 namespace EchoRelay.Core.Server.Storage
 {
-    public abstract class ServerStorage
+    public abstract class ServerStorage : IServerStorage
     {
         #region Properties
         public bool Opened { get; private set; }
