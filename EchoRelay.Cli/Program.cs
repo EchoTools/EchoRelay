@@ -39,7 +39,7 @@ namespace EchoRelay.Cli
             [Option('d', "database", SetName = "filesystem", Required = false, HelpText = "specify database folder")]
             public string? DatabasePath { get; set; }
 
-            [Option("nakama-uri", SetName = "nakama", Required = false, HelpText = "The URI of the Nakama server. (e.g. http://localhost:7351?serverkey=...&relayid=...)")]
+            [Option('N', "nakama-uri", SetName = "nakama", Required = false, HelpText = "The URI of the Nakama server. (e.g. http://localhost:7351?serverkey=...&relayid=...)")]
             public string? NakamaUri { get; set; }
 
             [Option('g', "game", Required = false, HelpText = "specify path to the 'ready-at-dawn-echo-arena' for building the symbol cache")]
