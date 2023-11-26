@@ -121,7 +121,7 @@ namespace EchoRelay.Core.Server.Storage.Nakama
                     payload: JsonConvert.SerializeObject(channelResource, StreamIO.JsonSerializerSettings));
                 break;
             case LoginSettingsResource loginSettingsResource:
-                await client.RpcAsync(session, "echorelay/setLoginSetting",
+                await client.RpcAsync(session, "echorelay/setLoginSettings",
                     payload: JsonConvert.SerializeObject(loginSettingsResource, StreamIO.JsonSerializerSettings));
                 break;
         }
@@ -270,16 +270,18 @@ internal class NakamaResourceCollectionProvider<K, V> : ResourceCollectionProvid
                 {
                     return default;
                 }
-            default:
-                // all other
-                var readObjectId = new StorageObjectId
+            case Type type when type == typeof(DocumentResource):
+                try
                 {
-                    Collection = _collection,
-                    Key = _keySelectorFunc(key),
-                    UserId = session.UserId,
-                };
-                resource = JsonConvert.DeserializeObject<V>((await client.ReadStorageObjectsAsync(session, new StorageObjectId[] { readObjectId })).Objects.First().Value);
-                break;
+                    IApiRpc data = await Storage.Client.RpcAsync(session, "echorelay/getDocument", payload: $"{{\"id\":\"{objectId}\"}}");
+                    if (data.Payload == null)
+                        return default;
+                    return JsonConvert.DeserializeObject<V>(data.Payload);
+                }
+                catch (ApiResponseException)
+                {
+                    return default;
+                }
         }
         return resource;
     }
