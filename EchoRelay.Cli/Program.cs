@@ -4,11 +4,16 @@ using EchoRelay.Core.Server;
 using EchoRelay.Core.Server.Services;
 using EchoRelay.Core.Server.Storage;
 using EchoRelay.Core.Server.Storage.Filesystem;
+using EchoRelay.Core.Server.Storage.Nakama;
 using EchoRelay.Core.Utils;
+using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
 using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
+using System.Text.RegularExpressions;
 
 namespace EchoRelay.Cli
 {
@@ -26,14 +31,16 @@ namespace EchoRelay.Cli
         /// The update timer used to trigger a peer stats update on a given interval.
         /// </summary>
         private static System.Timers.Timer? peerStatsUpdateTimer;
-
         /// <summary>
         /// The CLI argument options for the application.
         /// </summary>
         public class CliOptions
         {
             [Option('d', "database", SetName = "filesystem", Required = false, HelpText = "specify database folder")]
-            public string? DatabaseFolder { get; set; }
+            public string? DatabasePath { get; set; }
+
+            [Option("nakama-uri", SetName = "nakama", Required = false, HelpText = "The URI of the Nakama server. (e.g. http://localhost:7351?serverkey=...&relayid=...)")]
+            public string? NakamaUri { get; set; }
 
             [Option('g', "game", Required = false, HelpText = "specify path to the 'ready-at-dawn-echo-arena' for building the symbol cache")]
             public string? GameBasePath { get; set; }
@@ -41,40 +48,40 @@ namespace EchoRelay.Cli
             [Option('p', "port", Required = false, Default = 777, HelpText = "specify the TCP port to listen on")]
             public int Port { get; set; }
 
-            [Option("apikey", Required = false, Default = null, HelpText = "require game servers authenticate with API Key (via '?apikey=' query parameters).")]
+            [Option("apikey", Required = false, Default = null, HelpText = "Requires a specific API key as part of the ServerDB connection URI query parameters.")]
             public string? ServerDBApiKey { get; set; }
 
-            [Option("forcematching", Required = false, Default = true, HelpText = "attempt to match player again if first match fails.")]
+            [Option("forcematching", Required = false, Default = true, HelpText = "Forces users to match to any available game, in the event of their requested game servers being unavailable.")]
             public bool ForceMatching { get; set; }
 
-            [Option("lowpingmatching", Required = false, Default = false, HelpText = "prefer matches on lower ping game servers vs higher population.")]
+            [Option("lowpingmatching", Required = false, Default = false, HelpText = "Sets a preference for matching to game servers with low ping instead of high population.")]
             public bool LowPingMatching { get; set; }
 
-            [Option("outputconfig", Required = false, HelpText = "specify the path to write an example 'config.json'.")]
+            [Option("outputconfig", Required = false, HelpText = "Outputs the generated service config file to a given file path on disk.")]
             public string? OutputConfigPath { get; set; } = null;
 
-            [Option("statsinterval", Required = false, Default = 3000, HelpText = "specify update interval for peer stats output (in milliseconds).")]
+            [Option("statsinterval", Required = false, Default = 3000, HelpText = "Sets the interval at which the CLI will output its peer stats (in milliseconds).")]
             public double StatsUpdateInterval { get; set; }
 
-            [Option("noservervalidation", Required = false, Default = false, HelpText = "disable validation of game server connectivity.")]
+            [Option("noservervalidation", Required = false, Default = false, HelpText = "Disables validation of game servers using raw ping requests, ensuring their ports are exposed.")]
             public bool ServerDBValidateGameServers { get; set; }
 
-            [Option("servervalidationtimeout", Required = false, Default = 3000, HelpText = "set game server validation timeout for game server validation using raw ping requests. In milliseconds.")]
+            [Option("servervalidationtimeout", Required = false, Default = 3000, HelpText = "Sets the timeout for game server validation using raw ping requests. In milliseconds.")]
             public int ServerDBValidateGameServersTimeout { get; set; }
 
-            [Option('v', "verbose", Required = false, Default = false, HelpText = "increase verbosity")]
+            [Option('v', "verbose", Required = false, Default = false, HelpText = "Output all data to console/file (includes debug output). ")]
             public bool Verbose { get; set; } = true;
 
-            [Option('V', "debug", Required = false, Default = false, HelpText = "emit debugging output")]
+            [Option('V', "debug", Required = false, Default = false, HelpText = "Output all client/server messages.")]
             public bool Debug { get; set; } = true;
 
-            [Option('l', "logfile", Required = false, Default = null, HelpText = "send output to a logfile")]
+            [Option('l', "logfile", Required = false, Default = null, HelpText = "Specifies the path to the log file.")]
             public string? LogFilePath { get; set; }
 
-            [Option("disable-cache", Required = false, Default = false, HelpText = "disable caching of database resources, file edits are immediately effective")]
+            [Option("disable-cache", Required = false, Default = false, HelpText = "Disables the file cache. Edits to JSON files will be immediately effective.")]
             public bool DisableCache { get; set; } = true;
 
-            [Option("enable-api", Required = false, Default = false, HelpText = "enable the API server")]
+            [Option("enable-api", Required = false, Default = false, HelpText = "Enables the API server.")]
             public bool EnableApi { get; set; } = true;
 
         }
@@ -85,107 +92,148 @@ namespace EchoRelay.Cli
         /// <param name="args">The command-line arguments the application was invoked with.</param>
         static async Task Main(string[] args)
         {
-            // Parse our command line arguments.
-            await Parser.Default.ParseArguments<CliOptions>(args).WithParsedAsync(async options =>
+            try
             {
-                // Set our options globally
-                Options = options;
-
-                ConfigureLogger(options);
-
-                // Use the filesystem for storage
-                if (!Directory.Exists(options.DatabaseFolder))
+                // Parse our command line arguments.
+                await Parser.Default.ParseArguments<CliOptions>(args).WithParsedAsync(async options =>
                 {
-                    Log.Warning($"Creating database directory: {options.DatabaseFolder}");
-                    Directory.CreateDirectory(options.DatabaseFolder);
-                }
+                    // Set our options globally
+                    Options = options;
+                    IServerStorage serverStorage;
 
-                // Verify other arguments
-                if (options.Port < 0 || options.Port > ushort.MaxValue)
-                {
-                    Log.Fatal($"Provided port is invalid. You must a value between 1 and {ushort.MaxValue}.");
-                    return;
-                }
+                    ConfigureLogger(options);
 
-                Log.Debug($"Runtime arguments: '{string.Join(" ", args)}'");
-                // Create our file system storage and open it.
-                ServerStorage serverStorage = new FilesystemServerStorage(options.DatabaseFolder, Options.DisableCache);
+                    if (options.Port < 0 || options.Port > ushort.MaxValue)
+                        throw new ArgumentException($"Invalid port: '{options.Port}' Port must be between 1 and {ushort.MaxValue}");
 
-                serverStorage.Open();
+                    // Use the filesystem for storage
+                    if (!Directory.Exists(options.DatabasePath))
+                    {
+                        Log.Warning($"Creating database directory: {options.DatabasePath}");
+                        Directory.CreateDirectory(options.DatabasePath);
+                    }
 
-                // Check if initial deployment needs to be performed.
-                // If the database folder is empty, we deploy all resources.
-                // If it is non-empty, but missing critical resources, we ask whether to clear all resources but accounts.
-                bool allCriticalResourcesExist = serverStorage.AccessControlList.Exists() && serverStorage.ChannelInfo.Exists() && serverStorage.LoginSettings.Exists() && serverStorage.SymbolCache.Exists();
-                bool anyCriticalResourcesExist = serverStorage.AccessControlList.Exists() || serverStorage.ChannelInfo.Exists() || serverStorage.LoginSettings.Exists() || serverStorage.SymbolCache.Exists();
-                bool performInitialSetup = !allCriticalResourcesExist;
-                if (performInitialSetup && anyCriticalResourcesExist)
-                {
-                    Log.Warning("Critical resources are missing from storage, but storage is non-empty.\n" +
-                        "Would you like to re-deploy initial setup resources? Warning: this will clear all storage except accounts! [y/N]");
-                    performInitialSetup = Console.ReadKey(true).Key == ConsoleKey.Y;
-                }
+                    Log.Debug($"Runtime arguments: '{string.Join(" ", args)}'");
 
-                // Perform initial setup of server resources if needed.
-                if (performInitialSetup)
-                {
-                    Log.Information("[SERVER] Performing initial setup: server resources to database folder..");
-                    InitialDeployment.PerformInitialDeployment(serverStorage, options.GameBasePath, false);
-                }
+                    if (Options.NakamaUri != null)
+                    {
+                        // Use Nakama for storage
+                        serverStorage = await ConfigureNakamaAsync(Options.NakamaUri);
+                    }
+                    else if (Options.DatabasePath != null)
+                    {
+                        // Use the filesystem for storage
+                        if (!Directory.Exists(options.DatabasePath))
+                            throw new ArgumentException($"Database directory does not exist: '{options.DatabasePath}'");
 
-                // Create a server instance
-                Server = new Server(serverStorage,
-                    new ServerSettings(
-                        port: (ushort)options.Port,
-                        serverDbApiKey: options.ServerDBApiKey,
-                        serverDBValidateServerEndpoint: options.ServerDBValidateGameServers,
-                        serverDBValidateServerEndpointTimeout: options.ServerDBValidateGameServersTimeout,
-                        favorPopulationOverPing: !options.LowPingMatching,
-                        forceIntoAnySessionIfCreationFails: options.ForceMatching
-                        )
-                    );
+                        // Create our file system storage and open it.
+                        serverStorage = new FilesystemServerStorage(options.DatabasePath, Options.DisableCache);
+                    }
+                    else
+                    {
+                        throw new ArgumentException("Either '--database' or '--nakama-uri' must be specified.");
+                    }
 
-                // Set up all event handlers.
-                Server.OnServerStarted += Server_OnServerStarted;
-                Server.OnServerStopped += Server_OnServerStopped;
-                Server.OnAuthorizationResult += Server_OnAuthorizationResult;
-                Server.OnServicePeerConnected += Server_OnServicePeerConnected;
-                Server.OnServicePeerDisconnected += Server_OnServicePeerDisconnected;
-                Server.OnServicePeerAuthenticated += Server_OnServicePeerAuthenticated;
-                Server.ServerDBService.Registry.OnGameServerRegistered += Registry_OnGameServerRegistered;
-                Server.ServerDBService.Registry.OnGameServerUnregistered += Registry_OnGameServerUnregistered;
-                Server.ServerDBService.OnGameServerRegistrationFailure += ServerDBService_OnGameServerRegistrationFailure;
+                    serverStorage.Open();
 
-                // Set up all verbose event handlers.
-                if (options.Debug || options.Verbose)
-                {
-                    Server.OnServicePacketSent += Server_OnServicePacketSent;
-                    Server.OnServicePacketReceived += Server_OnServicePacketReceived;
-                }
+                    // Ensure the required resources are initialized.
+                    if (!serverStorage.AccessControlList.Exists())
+                    {
+                        Log.Warning("[SERVER] Access Control Lists objects do not exist. Creating...");
+                        InitialDeployment.DeployAccessControlList(serverStorage);
+                    }
 
-                if (Options.EnableApi)
-                {
-                    // Start the API server.
-                    _ = new ApiServer(Server, new ApiSettings(apiKey: options.ServerDBApiKey));
-                }
+                    if (!serverStorage.ChannelInfo.Exists())
+                    {
+                        Log.Warning("[SERVER] Channel Info objects do not exist. Creating...");
+                        InitialDeployment.DeployChannelInfo(serverStorage);
+                    }
 
+                    if (!serverStorage.Configs.Exists(("main_menu", "main_menu")))
+                    {
+                        Log.Warning("[SERVER] Configs objects do not exist. Creating...");
+                        InitialDeployment.DeployConfigs(serverStorage);
+                    }
 
-                try
-                {
+                    if (!serverStorage.Documents.Exists(("main_menu", "main_menu")))
+                    {
+                        Log.Warning("[SERVER] Document objects do not exist. Creating...");
+                        InitialDeployment.DeployDocuments(serverStorage);
+                    }
+                    if (!serverStorage.LoginSettings.Exists())
+                    {
+                        Log.Warning("[SERVER] Login Settings do not exist. Creating...");
+                        InitialDeployment.DeployLoginSettings(serverStorage);
+                    }
+                    if (!serverStorage.SymbolCache.Exists())
+                    {
+                        Log.Warning("[SERVER] Symbol Cache does not exist. Creating...");
+                        InitialDeployment.DeploySymbolCache(serverStorage, options.GameBasePath);
+                    }
+
+                    // Create a server instance
+                    Server = new Server(serverStorage,
+                        new ServerSettings(
+                            port: (ushort)options.Port,
+                            serverDbApiKey: options.ServerDBApiKey,
+                            serverDBValidateServerEndpoint: options.ServerDBValidateGameServers,
+                            serverDBValidateServerEndpointTimeout: options.ServerDBValidateGameServersTimeout,
+                            favorPopulationOverPing: !options.LowPingMatching,
+                            forceIntoAnySessionIfCreationFails: options.ForceMatching
+                            )
+                        );
+
+                    // Set up all event handlers.
+                    Server.OnServerStarted += Server_OnServerStarted;
+                    Server.OnServerStopped += Server_OnServerStopped;
+                    Server.OnAuthorizationResult += Server_OnAuthorizationResult;
+                    Server.OnServicePeerConnected += Server_OnServicePeerConnected;
+                    Server.OnServicePeerDisconnected += Server_OnServicePeerDisconnected;
+                    Server.OnServicePeerAuthenticated += Server_OnServicePeerAuthenticated;
+                    Server.ServerDBService.Registry.OnGameServerRegistered += Registry_OnGameServerRegistered;
+                    Server.ServerDBService.Registry.OnGameServerUnregistered += Registry_OnGameServerUnregistered;
+                    Server.ServerDBService.OnGameServerRegistrationFailure += ServerDBService_OnGameServerRegistrationFailure;
+
+                    // Set up all verbose event handlers.
+                    if (options.Debug || options.Verbose)
+                    {
+                        Server.OnServicePacketSent += Server_OnServicePacketSent;
+                        Server.OnServicePacketReceived += Server_OnServicePacketReceived;
+                    }
+
+                    if (Options.EnableApi)
+                    {
+                        // Start the API server.
+                        _ = new ApiServer(Server, new ApiSettings(apiKey: options.ServerDBApiKey));
+                    }
+
                     // Start the server.
                     await Server.Start();
-                }
-                catch (System.Net.HttpListenerException ex)
+                });
+            }
+            catch (Exception ex)
+            {
+                switch (ex)
                 {
-                    Log.Fatal($"Unable to start listener for connections: {ex.Message}");
+                    case System.Net.HttpListenerException httpListenerException:
+                        if (httpListenerException.ErrorCode == 5)
+                            Log.Information("The requested operation requires elevation (Run as administrator).\n\n"
+                           + $"To run as a user, execute 'netsh http add urlacl url=http://*:{Options.Port}/ user=Everyone' as Administrator");
 
-                    if (ex.ErrorCode == 5)
-                        Log.Information("The requested operation requires elevation (Run as administrator).\n\n"
-                       + $"To run as a user, execute 'netsh http add urlacl url=http://*:{options.Port}/ user=Everyone' as Administrator");
+                        Log.Fatal($"Unable to start listener for connections: {ex.Message}");
+                        Console.WriteLine($"Invalid Argument: {ex.Message}");
+                        Environment.Exit(0xA0);
+                        break;
 
-                    throw new ApplicationException($"Server startup failed: {ex.Message}");
+                    case ArgumentException argumentException:
+                        Console.WriteLine($"Invalid Argument: {ex.Message}");
+                        Environment.Exit(0xA0);
+                        break;
+
+                    default:
+                        throw;
                 }
-            });
+            };
         }
         /// <summary>
         /// Configures the Serilog logger based on the provided command-line options.
@@ -214,6 +262,53 @@ namespace EchoRelay.Cli
                 options.Verbose ? LogEventLevel.Debug : LogEventLevel.Warning);
 
             Log.Logger = logConfig.CreateLogger();
+        }
+
+        /// <summary>
+        /// Configures and connects to the Nakama backend for server storage.
+        /// </summary>
+        /// <param name="nakamaUriString">The Nakama URI string specifying the Nakama server connection details.</param>
+        /// <returns>An instance of <see cref="IServerStorage"/> representing the configured Nakama server storage.</returns>
+        private static async Task<IServerStorage> ConfigureNakamaAsync(string nakamaUriString)
+        {
+            // Validate the Nakama URI
+            Uri _nakamaUri;
+
+            StringValues _serverKey;
+            StringValues _relayId;
+            try
+            {
+                _nakamaUri = new(nakamaUriString);
+            }
+            catch (Exception ex)
+            {
+                throw new ArgumentException($"Provided Nakama URI is invalid: {ex.Message}.");
+            }
+
+            var _parsed = QueryHelpers.ParseQuery(_nakamaUri.Query);
+
+            if (!_parsed.TryGetValue("serverkey", out _serverKey))
+                throw new ArgumentException($"Nakama Server must be provided in uri. (e.g. ?serverkey=...)");
+
+            if (!_parsed.TryGetValue("relayid", out _relayId))
+            {
+                Log.Warning($"No 'relayid' specified in Nakama URI. Using machine name.");
+                _relayId = System.Environment.MachineName;
+            }
+            _relayId = Regex.Replace(_relayId, "^(?<id>[-A-z0-9_]+)", "RELAY:${id}");
+
+            Log.Information($"Authenticating with relayId: '{_relayId}'");
+
+            // Configure the Nakama storage
+            try
+            {
+                return await NakamaServerStorage.ConnectNakamaStorageAsync(_nakamaUri.Scheme, _nakamaUri.Host, _nakamaUri.Port, _serverKey, _relayId);
+            }
+            catch (Exception ex)
+            {
+                Log.Fatal($"Could not connect Nakama API: ${ex.Message}");
+                throw new ApplicationException($"Could not connect Nakama API: ${ex.Message}");
+            }
         }
 
         private static void Server_OnServerStarted(Server server)

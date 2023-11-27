@@ -20,12 +20,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="Nakama">
-      <HintPath>..\common\Nakama.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-
-  <ItemGroup>
     <Compile Update="Properties\Resources.Designer.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>

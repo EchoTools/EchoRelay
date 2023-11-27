@@ -297,7 +297,6 @@ internal class NakamaResourceCollectionProvider<K, V> : ResourceCollectionProvid
         var session = await Storage.RefreshSessionAsync();
         var resourceId = _keySelectorFunc(key);
         _resources[key] = (resourceId, resource);
-        WriteStorageObject writeObject;
 
         switch (resource)
         {

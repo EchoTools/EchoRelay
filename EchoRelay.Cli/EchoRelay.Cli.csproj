@@ -22,6 +22,7 @@
   <ItemGroup>
     <ProjectReference Include="..\EchoRelay.API\EchoRelay.API.csproj" />
     <ProjectReference Include="..\EchoRelay.Core\EchoRelay.Core.csproj" />
+    <ProjectReference Include="..\EchoRelay.Nakama\EchoRelay.Nakama.csproj" />
   </ItemGroup>
 
 </Project>
