@@ -43,7 +43,7 @@ namespace EchoRelay.Cli
             [Option('d', "database", SetName = "filesystem", Required = false, HelpText = "specify database folder")]
             public string? DatabasePath { get; set; }
 
-            [Option('N', "nakama-uri", SetName = "nakama", Required = false, HelpText = "specify Nakama server URI. (e.g. http://localhost:7351?serverkey=...&relayid=...)")]
+            [Option('N', "nakama-uri", SetName = "nakama", Required = false, HelpText = "specify Nakama server URI. (e.g. http://localhost:7351?server_key=...&relay_id=...)")]
             public string? NakamaUri { get; set; }
 
             [Option('g', "game", Required = false, HelpText = "specify path to the 'ready-at-dawn-echo-arena' for building the symbol cache")]
@@ -284,12 +284,12 @@ namespace EchoRelay.Cli
 
             var _parsed = QueryHelpers.ParseQuery(_nakamaUri.Query);
 
-            if (!_parsed.TryGetValue("serverkey", out _serverKey))
-                throw new ArgumentException($"Nakama Server must be provided in uri. (e.g. ?serverkey=...)");
+            if (!_parsed.TryGetValue("server_key", out _serverKey))
+                throw new ArgumentException($" 'server_key' be provided in uri query string. (e.g. ?server_key=...)");
 
-            if (!_parsed.TryGetValue("relayid", out _relayId))
+            if (!_parsed.TryGetValue("relay_id", out _relayId))
             {
-                Log.Warning($"No 'relayid' specified in Nakama URI. Using machine name.");
+                Log.Warning($"No 'relayid' specified in Nakama URI query strings. Using machine name.");
                 _relayId = System.Environment.MachineName;
             }
             _relayId = Regex.Replace(_relayId, "^(?<id>[-A-z0-9_]+)", "RELAY:${id}");
