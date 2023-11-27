@@ -1,3 +1,4 @@
+using EchoRelay.API.Controllers;
 using EchoRelay.Core.Server;
 using Serilog;
 
@@ -37,7 +38,7 @@ namespace EchoRelay.API
 
             var app = builder.Build();
             app.UseCors("AllowAll");
-
+            
             // Reduce logging noise
             app.UseSerilogRequestLogging();
 
@@ -47,7 +48,22 @@ namespace EchoRelay.API
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
-            app.UseMiddleware<ApiAuthentication>();
+            
+            app.UseWhen(context => context.Request.Path.StartsWithSegments("/servers"), branch =>
+            {
+                branch.UseMiddleware<ApiAuthentication>();
+            });
+            
+            app.UseWhen(context => context.Request.Path.StartsWithSegments("/sessions"), branch =>
+            {
+                branch.UseMiddleware<ApiAuthentication>();
+            });
+            
+            app.UseWhen(context => context.Request.Path.StartsWithSegments("/accounts"), branch =>
+            {
+                branch.UseMiddleware<ApiAuthentication>();
+            });
+            
             app.UseAuthorization();
             app.MapControllers();
 
