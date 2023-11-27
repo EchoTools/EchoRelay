@@ -1,4 +1,5 @@
-﻿using CommandLine;
+﻿using System.Runtime.InteropServices;
+using CommandLine;
 using EchoRelay.API;
 using EchoRelay.Core.Server;
 using EchoRelay.Core.Server.Services;
@@ -26,10 +27,20 @@ namespace EchoRelay.Cli
         /// The update timer used to trigger a peer stats update on a given interval.
         /// </summary>
         private static System.Timers.Timer? peerStatsUpdateTimer;
-
         /// <summary>
         /// The CLI argument options for the application.
         /// </summary>
+        private static ApiServer? ApiServer;
+
+
+        [DllImport("Kernel32")]
+        private static extern bool SetConsoleCtrlHandler(EventHandler handler, bool add);
+
+        private delegate bool EventHandler();
+        private static EventHandler? consoleCloseHandler;
+
+        // Enum to represent different CtrlTypes
+        
         public class CliOptions
         {
             [Option('d', "database", SetName = "filesystem", Required = false, HelpText = "specify database folder")]
@@ -76,6 +87,9 @@ namespace EchoRelay.Cli
 
             [Option("enable-api", Required = false, Default = false, HelpText = "enable the API server")]
             public bool EnableApi { get; set; } = true;
+            
+            [Option("advertise", Required = false, Default = false, HelpText = "advertise central api when your relay is online")]
+            public bool Advertise { get; set; } = true;
 
         }
 
@@ -156,6 +170,9 @@ namespace EchoRelay.Cli
                 Server.ServerDBService.Registry.OnGameServerUnregistered += Registry_OnGameServerUnregistered;
                 Server.ServerDBService.OnGameServerRegistrationFailure += ServerDBService_OnGameServerRegistrationFailure;
 
+                consoleCloseHandler += new EventHandler(ConsoleCloseHandler);
+                SetConsoleCtrlHandler(consoleCloseHandler, true);
+                
                 // Set up all verbose event handlers.
                 if (options.Debug || options.Verbose)
                 {
@@ -165,9 +182,9 @@ namespace EchoRelay.Cli
 
                 if (Options.EnableApi)
                 {
-                    // Start the API server.
-                    var server = new ApiServer(Server, new ApiSettings(apiKey: options.ServerDBApiKey));
-                    server.registerServiceOnCentralAPI(true);
+                    ApiServer = new ApiServer(Server, new ApiSettings(apiKey: options.ServerDBApiKey));
+                    if(Options.Advertise)
+                        ApiServer.registerServiceOnCentralAPI(true);
                 }
 
 
@@ -314,6 +331,20 @@ namespace EchoRelay.Cli
         private static void Server_OnServicePacketReceived(Core.Server.Services.Service service, Core.Server.Services.Peer sender, Core.Server.Messages.Packet packet)
         {
             packet.ForEach(p => Log.Debug($"[{service.Name}] ({sender.Address}:{sender.Port}) RECV: " + p));
+        }
+        
+        // Handler for the console close event
+        private static bool ConsoleCloseHandler()
+        {
+            if(Options.Advertise)
+                ApiServer?.registerServiceOnCentralAPI(true);
+            Console.WriteLine("Console is closing. Performing cleanup...");
+            Server?.Stop();
+            
+            Thread.Sleep(1500);
+            
+            // Allow the program to exit
+            return true;
         }
     }
 }
