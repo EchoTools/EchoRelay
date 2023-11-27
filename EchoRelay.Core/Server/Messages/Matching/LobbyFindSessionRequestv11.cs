@@ -40,8 +40,11 @@ namespace EchoRelay.Core.Server.Messages.Matching
 
         // TODO
         public ulong Unk1;
-        public UInt128 Unk2;
 
+        /// <summary>
+        /// Guid of the server the client is currently connected to.
+        /// </summary>
+        public Guid CurrentSession;
         /// <summary>
         /// The channel requested for the session.
         /// </summary>
@@ -73,7 +76,7 @@ namespace EchoRelay.Core.Server.Messages.Matching
             PlatformSymbol = -1;
             Session = new Guid();
             Unk1 = 0;
-            Unk2 = 0;
+            CurrentSession = new Guid();
             ChannelUUID = new Guid();
             SessionSettings = new ERGameServerStartSession.SessionSettings();
             UserId = new XPlatformId();
@@ -94,7 +97,7 @@ namespace EchoRelay.Core.Server.Messages.Matching
             io.Stream(ref PlatformSymbol);
             io.Stream(ref Session);
             io.Stream(ref Unk1);
-            io.Stream(ref Unk2);
+            io.Stream(ref CurrentSession);
             io.Stream(ref ChannelUUID);
             io.StreamJSON(ref SessionSettings, true, JSONCompressionMode.None);
             UserId.Stream(io);
@@ -121,7 +124,7 @@ namespace EchoRelay.Core.Server.Messages.Matching
                 $"platform={PlatformSymbol}, " +
                 $"session={Session}, " +
                 $"unk1={Unk1}, " +
-                $"unk2={Unk2}, " +
+                $"currentsession={CurrentSession}, " +
                 $"channel={ChannelUUID}, " +
                 $"session_settings={JObject.FromObject(SessionSettings).ToString(Newtonsoft.Json.Formatting.None)}, " +
                 $"user_id={UserId}, " +

@@ -33,12 +33,13 @@ namespace EchoRelay.Core.Server.Services.Matching
         }
         public ERGameServerStartSession.SessionSettings SessionSettings { get; private set; }
         public TeamIndex TeamIndex { get; private set; }
+        public Guid? CurrentSession;
 
         public long? RegionSymbol { get; private set; }
 
         public RegisteredGameServer? MatchedGameServer { get; set; }
         public Guid? MatchedSessionId { get; set; }
-        private MatchingSession(XPlatformId userId, Guid? lobbyId, Guid? channel, long? gameTypeSymbol, long? levelSymbol, LobbyType newSessionLobbyType, TeamIndex teamIndex, ERGameServerStartSession.SessionSettings sessionSettings, Int64? regionSymbol = null)
+        private MatchingSession(XPlatformId userId, Guid? lobbyId, Guid? channel, long? gameTypeSymbol, long? levelSymbol, LobbyType newSessionLobbyType, TeamIndex teamIndex, Guid? currentSession, ERGameServerStartSession.SessionSettings sessionSettings, Int64? regionSymbol = null)
         {
             UserId = userId;
             LobbyId = lobbyId;
@@ -47,22 +48,23 @@ namespace EchoRelay.Core.Server.Services.Matching
             LevelSymbol = levelSymbol;
             NewSessionLobbyType = newSessionLobbyType;
             TeamIndex = teamIndex;
+            CurrentSession = currentSession;
             SessionSettings = sessionSettings;
             RegionSymbol = regionSymbol;
         }
 
         public static MatchingSession FromCreateSessionCriteria(XPlatformId userId, Guid? channel, long? gameTypeSymbol, long? levelSymbol, LobbyType lobbyType, TeamIndex teamIndex, ERGameServerStartSession.SessionSettings sessionSettings, Int64? RegionSymbol = null)
         {
-            return new MatchingSession(userId, null, channel, gameTypeSymbol, levelSymbol, lobbyType, teamIndex, sessionSettings, RegionSymbol);
+            return new MatchingSession(userId, null, channel, gameTypeSymbol, levelSymbol, lobbyType, teamIndex, null, sessionSettings, RegionSymbol);
         }
-        public static MatchingSession FromFindSessionCriteria(XPlatformId userId, Guid? channel, long? gameTypeSymbol, TeamIndex teamIndex, ERGameServerStartSession.SessionSettings sessionSettings)
+        public static MatchingSession FromFindSessionCriteria(XPlatformId userId, Guid? channel, long? gameTypeSymbol, TeamIndex teamIndex, Guid? currentSession, ERGameServerStartSession.SessionSettings sessionSettings)
         {
-            return new MatchingSession(userId, null, channel, gameTypeSymbol, null, LobbyType.Public, teamIndex, sessionSettings);
+            return new MatchingSession(userId, null, channel, gameTypeSymbol, null, LobbyType.Public, teamIndex, currentSession, sessionSettings);
         }
 
         public static MatchingSession FromJoinSpecificSessionCriteria(XPlatformId userId, Guid? lobbyId, TeamIndex teamIndex, ERGameServerStartSession.SessionSettings sessionSettings)
         {
-            return new MatchingSession(userId, lobbyId, null, null, null, LobbyType.Public, teamIndex, sessionSettings);
+            return new MatchingSession(userId, lobbyId, null, null, null, LobbyType.Public, teamIndex, null, sessionSettings);
         }
     }
 }

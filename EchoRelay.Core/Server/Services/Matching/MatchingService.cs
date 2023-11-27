@@ -60,7 +60,7 @@ namespace EchoRelay.Core.Server.Services.Matching
         private async Task ProcessCreateSessionRequestv9(Peer sender, LobbyCreateSessionRequestv9 request)
         {
             // Set the matching data for our user to provide context to matching operations moving forward.
-            sender.SetSessionData(MatchingSession.FromCreateSessionCriteria(request.UserId, request.ChannelUUID, request.GameTypeSymbol, request.LevelSymbol, request.LobbyType, (TeamIndex)request.TeamIndex, request.SessionSettings,request.RegionSymbol));
+            sender.SetSessionData(MatchingSession.FromCreateSessionCriteria(request.UserId, request.ChannelUUID, request.GameTypeSymbol, request.LevelSymbol, request.LobbyType, (TeamIndex)request.TeamIndex, request.SessionSettings, request.RegionSymbol)) ;
 
             // Process the underlying request.
             await ProcessMatchingSession(sender, request.Session, request.UserId);
@@ -74,7 +74,7 @@ namespace EchoRelay.Core.Server.Services.Matching
         private async Task ProcessFindSessionRequestv11(Peer sender, LobbyFindSessionRequestv11 request)
         {
             // Set the matching data for our user to provide context to matching operations moving forward.
-            sender.SetSessionData(MatchingSession.FromFindSessionCriteria(request.UserId, request.ChannelUUID, request.GameTypeSymbol, (TeamIndex)request.TeamIndex, request.SessionSettings));
+            sender.SetSessionData(MatchingSession.FromFindSessionCriteria(request.UserId, request.ChannelUUID, request.GameTypeSymbol, (TeamIndex)request.TeamIndex, request.CurrentSession, request.SessionSettings));
 
             // Process the underlying request.
             await ProcessMatchingSession(sender, request.Session, request.UserId);
@@ -204,6 +204,9 @@ namespace EchoRelay.Core.Server.Services.Matching
                 unfilledServerOnly: true
             );
             }
+
+            // Case when pressing "New Lobby" button in the menu.
+            gameServers = gameServers.Where(x => x.SessionId == null || x.SessionId != matchingSession.CurrentSession);
 
             // If we only have one game server, immediately connect the peer. Otherwise, perform a ping request to determine the lowest ping server.
             if (gameServers.Count() == 1)
