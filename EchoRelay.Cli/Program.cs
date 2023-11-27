@@ -41,12 +41,15 @@ namespace EchoRelay.Cli
         public class CliOptions
         {
             [Option('d', "database", SetName = "filesystem", Required = false, HelpText = "specify database folder")]
-            public string? DatabaseFolder { get; set; }
+            public string? DatabasePath { get; set; }
+
+            [Option('N', "nakama-uri", SetName = "nakama", Required = false, HelpText = "specify Nakama server URI. (e.g. http://localhost:7351?serverkey=...&relayid=...)")]
+            public string? NakamaUri { get; set; }
 
             [Option('g', "game", Required = false, HelpText = "specify path to the 'ready-at-dawn-echo-arena' for building the symbol cache")]
             public string? GameBasePath { get; set; }
 
-            [Option('p', "port", Required = false, Default = 777, HelpText = "specify the TCP port to listen on")]
+            [Option('p', "port", Required = false, Default = 7777, HelpText = "specify the TCP port to listen on")]
             public int Port { get; set; }
 
             [Option("apikey", Required = false, Default = null, HelpText = "require game servers authenticate with API Key (via '?apikey=' query parameters).")]
@@ -112,7 +115,7 @@ namespace EchoRelay.Cli
                     if (Options.NakamaUri != null)
                     {
                         // Use Nakama for storage
-                        serverStorage = await ConfigureNakamaBackend(Options.NakamaUri);
+                        serverStorage = await ConfigureNakamaAsync(Options.NakamaUri);
                     }
                     else if (Options.DatabasePath != null)
                     {
