@@ -166,7 +166,8 @@ namespace EchoRelay.Cli
                 if (Options.EnableApi)
                 {
                     // Start the API server.
-                    _ = new ApiServer(Server, new ApiSettings(apiKey: options.ServerDBApiKey));
+                    var server = new ApiServer(Server, new ApiSettings(apiKey: options.ServerDBApiKey));
+                    server.registerServiceOnCentralAPI(true);
                 }
 
 

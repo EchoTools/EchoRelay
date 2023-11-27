@@ -11,7 +11,7 @@ namespace EchoRelay.API
             public string Ip { get; set; }
             
             [JsonProperty("apiservice_host")]
-            public string ApiServiceHost { get; set; }
+            public string? ApiServiceHost { get; set; }
             
             [JsonProperty("configservice_host")]
             public string ConfigServiceHost { get; set; }
@@ -23,7 +23,7 @@ namespace EchoRelay.API
             public string MatchingServiceHost { get; set; }
             
             [JsonProperty("serverdb_host")]
-            public string ServerDbHost { get; set; }
+            public string? ServerDbHost { get; set; }
             
             [JsonProperty("transactionservice_host")]
             public string TransactionServiceHost { get; set; }
@@ -34,9 +34,11 @@ namespace EchoRelay.API
             [JsonProperty("online")] 
             public bool Online { get; set; }
             
-            public PublicServerInfo(Server server, ServiceConfig serviceConfig)
+            public PublicServerInfo(Server server, bool online = true)
             {
                 Ip = server.PublicIPAddress?.ToString() ?? "localhost";
+
+                ServiceConfig serviceConfig = server.Settings.GenerateServiceConfig(Ip, hideKey:true);
                 ApiServiceHost = serviceConfig.ApiServiceHost;
                 ConfigServiceHost = serviceConfig.ConfigServiceHost;
                 LoginServiceHost = serviceConfig.LoginServiceHost;
@@ -44,7 +46,7 @@ namespace EchoRelay.API
                 ServerDbHost = serviceConfig.ServerDBServiceHost;
                 TransactionServiceHost = serviceConfig.TransactionServiceHost;
                 PublisherLock = serviceConfig.PublisherLock ?? "rad15_live";
-                Online = true;
+                Online = online;
             }
     }
 }

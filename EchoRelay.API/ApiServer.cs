@@ -1,5 +1,9 @@
+using System.Text;
 using EchoRelay.API.Controllers;
 using EchoRelay.Core.Server;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using Serilog;
 
 namespace EchoRelay.API
@@ -13,6 +17,8 @@ namespace EchoRelay.API
         public delegate void ApiSettingsUpdated();
         public event ApiSettingsUpdated? OnApiSettingsUpdated;
         public ApiSettings ApiSettings { get; private set; }
+        
+        public HttpClient HttpClient;
 
         public ApiServer(Server relayServer, ApiSettings apiSettings)
         {
@@ -20,6 +26,8 @@ namespace EchoRelay.API
 
             RelayServer = relayServer;
             ApiSettings = apiSettings;
+            HttpClient = new HttpClient();
+            HttpClient.BaseAddress = new Uri("https://url-de-votre-api-externe/");
 
             var builder = WebApplication.CreateBuilder();
             builder.Services.AddCors(options =>
@@ -74,6 +82,31 @@ namespace EchoRelay.API
         {
             ApiSettings = newSettings;
             OnApiSettingsUpdated?.Invoke();
+        }
+        public async void registerServiceOnCentralAPI(bool online)
+        {
+            try
+            {
+                // Create the JSON data from your request model
+                var requestData = new PublicServerInfo(RelayServer.ServerDBService.Server, online);
+                var jsonData = JsonConvert.SerializeObject(requestData);
+
+                // Create the content for the POST request using JSON data
+                var content = new StringContent(jsonData, Encoding.UTF8, "application/json");
+
+                // Specify the URL of the external API
+                var apiUrl = $"updateServer/{RelayServer.PublicIPAddress}";
+
+                // Perform the POST request
+                var response = await HttpClient.PostAsync(apiUrl, content);
+
+                // Check if the request was successful (2xx status)
+                response.EnsureSuccessStatusCode();
+            }
+            catch (HttpRequestException ex)
+            {
+                Console.WriteLine($"An error occurred during the request: {ex.Message}");
+            }
         }
     }
 }

@@ -21,9 +21,6 @@ public class PublicSessionInfo
     [JsonProperty("playerCount")]
     public int PlayerCount { get; set; }
     
-    [JsonProperty("assigned")]
-    public bool Unassigned { get; set; }
-    
     [JsonProperty("sessionID")]
     public string? SessionId { get; set; }
 
@@ -52,15 +49,13 @@ public class PublicSessionInfo
         GameServerId = gameServer.ServerId;
         ServerIp = gameServer.ExternalAddress.ToString();
         SessionId = gameServer.SessionId.ToString();
-        Level = gameServer.SessionLevelSymbol == null ? "" : gameServer.Peer.Server.SymbolCache.GetName(gameServer.SessionLevelSymbol.Value);
+        Level = gameServer.SessionLevelSymbol == null ? "" : gameServer.Peer.Service.Server.SymbolCache.GetName(gameServer.SessionLevelSymbol.Value);
         GameMode = gameServer.SessionGameTypeSymbol == null ? "" : gameServer.Peer.Server.SymbolCache.GetName(gameServer.SessionGameTypeSymbol.Value);
         PlayerLimit = gameServer.SessionPlayerLimits.TotalPlayerLimit;
         ActivePlayerLimit = gameServer.SessionPlayerLimits.FixedActiveGameParticipantTarget;
         PlayerCount = gameServer.SessionPlayerSessions.Count;
         Locked = gameServer.SessionLocked;
         @Public = gameServer.SessionLobbyType == ERGameServerStartSession.LobbyType.Public;
-        Unassigned = gameServer.SessionLobbyType == ERGameServerStartSession.LobbyType.Unassigned;
-        Region = gameServer.Peer.Server.SymbolCache.GetName(gameServer.RegionSymbol) ?? "";
-        
+        Region = gameServer.Peer.Service.Server.SymbolCache.GetName(gameServer.RegionSymbol) ?? "";
     }
 }
