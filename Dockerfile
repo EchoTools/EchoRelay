@@ -4,7 +4,7 @@ FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:7.0 AS build
 LABEL org.opencontainers.image.authors="github:EchoTools"
 
 ARG BUILD_CONFIG="Release"
-
+ARG DEFAULT_PORT=6789
 COPY . /source
 
 WORKDIR /source
@@ -38,5 +38,7 @@ USER appuser
 WORKDIR /app
 
 VOLUME /data
+
+EXPOSE $DEFAULT_PORT
 
 ENTRYPOINT ["dotnet", "EchoRelay.Cli.dll"]
