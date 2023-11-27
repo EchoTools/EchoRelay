@@ -5,6 +5,7 @@ using EchoRelay.Core.Server.Services;
 using EchoRelay.Core.Server.Storage;
 using EchoRelay.Core.Server.Storage.Filesystem;
 using EchoRelay.Core.Server.Storage.Nakama;
+using EchoRelay.Core.Server.Storage.Types;
 using EchoRelay.Core.Utils;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
@@ -13,6 +14,8 @@ using Newtonsoft.Json;
 using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
+using System.Data.Common;
+using System.Diagnostics.Eventing.Reader;
 using System.Text.RegularExpressions;
 
 namespace EchoRelay.Cli
@@ -31,16 +34,14 @@ namespace EchoRelay.Cli
         /// The update timer used to trigger a peer stats update on a given interval.
         /// </summary>
         private static System.Timers.Timer? peerStatsUpdateTimer;
+
         /// <summary>
         /// The CLI argument options for the application.
         /// </summary>
         public class CliOptions
         {
             [Option('d', "database", SetName = "filesystem", Required = false, HelpText = "specify database folder")]
-            public string? DatabasePath { get; set; }
-
-            [Option('N', "nakama-uri", SetName = "nakama", Required = false, HelpText = "The URI of the Nakama server. (e.g. http://localhost:7351?serverkey=...&relayid=...)")]
-            public string? NakamaUri { get; set; }
+            public string? DatabaseFolder { get; set; }
 
             [Option('g', "game", Required = false, HelpText = "specify path to the 'ready-at-dawn-echo-arena' for building the symbol cache")]
             public string? GameBasePath { get; set; }
@@ -48,40 +49,40 @@ namespace EchoRelay.Cli
             [Option('p', "port", Required = false, Default = 777, HelpText = "specify the TCP port to listen on")]
             public int Port { get; set; }
 
-            [Option("apikey", Required = false, Default = null, HelpText = "Requires a specific API key as part of the ServerDB connection URI query parameters.")]
+            [Option("apikey", Required = false, Default = null, HelpText = "require game servers authenticate with API Key (via '?apikey=' query parameters).")]
             public string? ServerDBApiKey { get; set; }
 
-            [Option("forcematching", Required = false, Default = true, HelpText = "Forces users to match to any available game, in the event of their requested game servers being unavailable.")]
+            [Option("forcematching", Required = false, Default = true, HelpText = "attempt to match player again if first match fails.")]
             public bool ForceMatching { get; set; }
 
-            [Option("lowpingmatching", Required = false, Default = false, HelpText = "Sets a preference for matching to game servers with low ping instead of high population.")]
+            [Option("lowpingmatching", Required = false, Default = false, HelpText = "prefer matches on lower ping game servers vs higher population.")]
             public bool LowPingMatching { get; set; }
 
-            [Option("outputconfig", Required = false, HelpText = "Outputs the generated service config file to a given file path on disk.")]
+            [Option("outputconfig", Required = false, HelpText = "specify the path to write an example 'config.json'.")]
             public string? OutputConfigPath { get; set; } = null;
 
-            [Option("statsinterval", Required = false, Default = 3000, HelpText = "Sets the interval at which the CLI will output its peer stats (in milliseconds).")]
+            [Option("statsinterval", Required = false, Default = 3000, HelpText = "specify update interval for peer stats output (in milliseconds).")]
             public double StatsUpdateInterval { get; set; }
 
-            [Option("noservervalidation", Required = false, Default = false, HelpText = "Disables validation of game servers using raw ping requests, ensuring their ports are exposed.")]
+            [Option("noservervalidation", Required = false, Default = false, HelpText = "disable validation of game server connectivity.")]
             public bool ServerDBValidateGameServers { get; set; }
 
-            [Option("servervalidationtimeout", Required = false, Default = 3000, HelpText = "Sets the timeout for game server validation using raw ping requests. In milliseconds.")]
+            [Option("servervalidationtimeout", Required = false, Default = 3000, HelpText = "set game server validation timeout for game server validation using raw ping requests. In milliseconds.")]
             public int ServerDBValidateGameServersTimeout { get; set; }
 
-            [Option('v', "verbose", Required = false, Default = false, HelpText = "Output all data to console/file (includes debug output). ")]
+            [Option('v', "verbose", Required = false, Default = false, HelpText = "increase verbosity")]
             public bool Verbose { get; set; } = true;
 
-            [Option('V', "debug", Required = false, Default = false, HelpText = "Output all client/server messages.")]
+            [Option('V', "debug", Required = false, Default = false, HelpText = "emit debugging output")]
             public bool Debug { get; set; } = true;
 
-            [Option('l', "logfile", Required = false, Default = null, HelpText = "Specifies the path to the log file.")]
+            [Option('l', "logfile", Required = false, Default = null, HelpText = "send output to a logfile")]
             public string? LogFilePath { get; set; }
 
-            [Option("disable-cache", Required = false, Default = false, HelpText = "Disables the file cache. Edits to JSON files will be immediately effective.")]
+            [Option("disable-cache", Required = false, Default = false, HelpText = "disable caching of database resources, file edits are immediately effective")]
             public bool DisableCache { get; set; } = true;
 
-            [Option("enable-api", Required = false, Default = false, HelpText = "Enables the API server.")]
+            [Option("enable-api", Required = false, Default = false, HelpText = "enable the API server")]
             public bool EnableApi { get; set; } = true;
 
         }
@@ -101,24 +102,17 @@ namespace EchoRelay.Cli
                     Options = options;
                     IServerStorage serverStorage;
 
-                    ConfigureLogger(options);
-
                     if (options.Port < 0 || options.Port > ushort.MaxValue)
                         throw new ArgumentException($"Invalid port: '{options.Port}' Port must be between 1 and {ushort.MaxValue}");
 
-                    // Use the filesystem for storage
-                    if (!Directory.Exists(options.DatabasePath))
-                    {
-                        Log.Warning($"Creating database directory: {options.DatabasePath}");
-                        Directory.CreateDirectory(options.DatabasePath);
-                    }
+                    ConfigureLogger(options);
 
                     Log.Debug($"Runtime arguments: '{string.Join(" ", args)}'");
 
                     if (Options.NakamaUri != null)
                     {
                         // Use Nakama for storage
-                        serverStorage = await ConfigureNakamaAsync(Options.NakamaUri);
+                        serverStorage = await ConfigureNakamaBackend(Options.NakamaUri);
                     }
                     else if (Options.DatabasePath != null)
                     {
