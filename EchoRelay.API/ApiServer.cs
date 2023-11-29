@@ -88,15 +88,18 @@ namespace EchoRelay.API
             try
             {
                 // Create the JSON data from your request model
-                var requestData = new PublicServerInfo(RelayServer.ServerDBService.Server, online);
+                var requestData = new PublicServerInfo(RelayServer, online);
                 var jsonData = JsonConvert.SerializeObject(requestData);
 
                 // Create the content for the POST request using JSON data
                 var content = new StringContent(jsonData, Encoding.UTF8, "application/json");
-
+            
                 // Specify the URL of the external API
                 var apiUrl = $"api/setServerStatus/{RelayServer.PublicIPAddress}";
-
+                Console.WriteLine(apiUrl);
+                Console.WriteLine(jsonData);
+                Console.WriteLine(RelayServer);
+                Console.WriteLine(RelayServer.PublicIPAddress);
                 // Perform the POST request
                 var response = await HttpClient.PostAsync(apiUrl, content);
 
