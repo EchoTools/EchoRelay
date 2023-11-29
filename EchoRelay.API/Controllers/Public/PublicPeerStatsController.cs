@@ -1,13 +1,9 @@
-﻿using EchoRelay.Core.Game;
-using EchoRelay.Core.Server.Services.ServerDB;
-using EchoRelay.Core.Server.Storage;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using System.Net;
+using EchoRelay.API.Public;
 using EchoRelay.Core.Server;
-using EchoRelay.Core.Server.Messages.ServerDB;
 
-namespace EchoRelay.API.Controllers
+namespace EchoRelay.API.Controllers.Public
 {
     [Route("peerStats/")]
     [ApiController]

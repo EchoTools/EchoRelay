@@ -3,32 +3,32 @@ using EchoRelay.Core.Server;
 using EchoRelay.Core.Server.Services.ServerDB;
 using Newtonsoft.Json;
 
-namespace EchoRelay.API
+namespace EchoRelay.API.Public
 {
     public class PublicServerInfo
     {
             [JsonProperty("ip")] 
             public string Ip { get; set; }
             
-            [JsonProperty("apiservice_host")]
+            [JsonProperty("apiServiceHost")]
             public string? ApiServiceHost { get; set; }
             
-            [JsonProperty("configservice_host")]
+            [JsonProperty("configServiceHost")]
             public string ConfigServiceHost { get; set; }
             
-            [JsonProperty("loginservice_host")]
+            [JsonProperty("loginServiceHost")]
             public string LoginServiceHost { get; set; }
             
-            [JsonProperty("matchingservice_host")]
+            [JsonProperty("matchingServiceHost")]
             public string MatchingServiceHost { get; set; }
             
-            [JsonProperty("serverdb_host")]
+            [JsonProperty("serverDbHost")]
             public string? ServerDbHost { get; set; }
             
-            [JsonProperty("transactionservice_host")]
+            [JsonProperty("transactionServiceHost")]
             public string TransactionServiceHost { get; set; }
             
-            [JsonProperty("publisher_lock")]
+            [JsonProperty("publisherLock")]
             public string PublisherLock { get; set; }
             
             [JsonProperty("online")] 

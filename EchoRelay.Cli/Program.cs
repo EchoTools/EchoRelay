@@ -337,7 +337,7 @@ namespace EchoRelay.Cli
         private static bool ConsoleCloseHandler()
         {
             if(Options?.Advertise != null)
-                ApiServer?.registerServiceOnCentralAPI(true);
+                ApiServer?.registerServiceOnCentralAPI(false);
             Console.WriteLine("Console is closing. Performing cleanup...");
             Server?.Stop();
             
