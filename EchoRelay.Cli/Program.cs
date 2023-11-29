@@ -87,9 +87,10 @@ namespace EchoRelay.Cli
 
             [Option("enable-api", Required = false, Default = false, HelpText = "enable the API server")]
             public bool EnableApi { get; set; } = true;
-            
-            [Option("advertise", Required = false, Default = false, HelpText = "advertise central api when your relay is online")]
-            public bool Advertise { get; set; } = true;
+
+            [Option("advertise", Required = false, Default = null,
+                HelpText = "advertise central api when your relay is online")]
+            public string? Advertise { get; set; } = null;
 
         }
 
@@ -182,8 +183,8 @@ namespace EchoRelay.Cli
 
                 if (Options.EnableApi)
                 {
-                    ApiServer = new ApiServer(Server, new ApiSettings(apiKey: options.ServerDBApiKey));
-                    if(Options.Advertise)
+                    ApiServer = new ApiServer(Server, new ApiSettings(apiKey: options.ServerDBApiKey, advertise: options.Advertise));
+                    if(Options.Advertise != null)
                         ApiServer.registerServiceOnCentralAPI(true);
                 }
 
@@ -336,7 +337,7 @@ namespace EchoRelay.Cli
         // Handler for the console close event
         private static bool ConsoleCloseHandler()
         {
-            if(Options.Advertise)
+            if(Options?.Advertise != null)
                 ApiServer?.registerServiceOnCentralAPI(true);
             Console.WriteLine("Console is closing. Performing cleanup...");
             Server?.Stop();

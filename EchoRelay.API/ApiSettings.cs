@@ -3,8 +3,10 @@
     public class ApiSettings
     {
         public string? ApiKey;
-        public ApiSettings(string? apiKey) {
+        public string? Advertise;
+        public ApiSettings(string? apiKey, string? advertise) {
             ApiKey = apiKey;
+            Advertise = advertise;
         }
     }
 }
