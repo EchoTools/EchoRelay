@@ -27,7 +27,7 @@ namespace EchoRelay.API
             RelayServer = relayServer;
             ApiSettings = apiSettings;
             HttpClient = new HttpClient();
-            HttpClient.BaseAddress = new Uri("https://url-de-votre-api-externe/");
+            HttpClient.BaseAddress = new Uri(ApiSettings.Advertise);
 
             var builder = WebApplication.CreateBuilder();
             builder.Services.AddCors(options =>
@@ -95,7 +95,7 @@ namespace EchoRelay.API
                 var content = new StringContent(jsonData, Encoding.UTF8, "application/json");
 
                 // Specify the URL of the external API
-                var apiUrl = $"updateServer/{RelayServer.PublicIPAddress}";
+                var apiUrl = $"api/setServerStatus/{RelayServer.PublicIPAddress}";
 
                 // Perform the POST request
                 var response = await HttpClient.PostAsync(apiUrl, content);
