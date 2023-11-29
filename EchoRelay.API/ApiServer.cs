@@ -1,8 +1,6 @@
 using System.Text;
-using EchoRelay.API.Controllers;
+using EchoRelay.API.Public;
 using EchoRelay.Core.Server;
-using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Serilog;
 
@@ -96,10 +94,7 @@ namespace EchoRelay.API
             
                 // Specify the URL of the external API
                 var apiUrl = $"api/setServerStatus/{RelayServer.PublicIPAddress}";
-                Console.WriteLine(apiUrl);
-                Console.WriteLine(jsonData);
-                Console.WriteLine(RelayServer);
-                Console.WriteLine(RelayServer.PublicIPAddress);
+
                 // Perform the POST request
                 var response = await HttpClient.PostAsync(apiUrl, content);
 

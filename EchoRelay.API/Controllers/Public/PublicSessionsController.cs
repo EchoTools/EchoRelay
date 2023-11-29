@@ -1,12 +1,10 @@
-﻿using EchoRelay.Core.Game;
-using EchoRelay.Core.Server.Services.ServerDB;
-using EchoRelay.Core.Server.Storage;
-using Microsoft.AspNetCore.Http;
+﻿using EchoRelay.Core.Server.Services.ServerDB;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
+using EchoRelay.API.Public;
 using EchoRelay.Core.Server.Messages.ServerDB;
 
-namespace EchoRelay.API.Controllers
+namespace EchoRelay.API.Controllers.Public
 {
     [Route("sessionsList/")]
     [ApiController]
@@ -25,13 +23,13 @@ namespace EchoRelay.API.Controllers
                 }
 
                 var publicSessions = new List<PublicSessionInfo>();
-                var servers = Registry.RegisteredGameServersBySessionId.Keys;
-                foreach (var sessionId in servers)
+                var servers = Registry.RegisteredGameServers;
+                foreach (var server in servers)
                 {
-                    var gameServer = Registry.GetGameServer(sessionId);
-                    if (gameServer != null)
+                    var gameServer = server.Value;
+                    if(gameServer.SessionLobbyType != ERGameServerStartSession.LobbyType.Private)
                     {
-                        if(gameServer.SessionLobbyType != ERGameServerStartSession.LobbyType.Private)
+                        if (gameServer.SessionStarted)
                         {
                             publicSessions.Add(new PublicSessionInfo(gameServer));
                         }
