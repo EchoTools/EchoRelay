@@ -180,15 +180,7 @@ namespace EchoRelay.Cli
                     Server.OnServicePacketSent += Server_OnServicePacketSent;
                     Server.OnServicePacketReceived += Server_OnServicePacketReceived;
                 }
-
-                if (Options.EnableApi)
-                {
-                    ApiServer = new ApiServer(Server, new ApiSettings(apiKey: options.ServerDBApiKey, advertise: options.Advertise));
-                    if(Options.Advertise != null)
-                        ApiServer.registerServiceOnCentralAPI(true);
-                }
-
-
+                
                 try
                 {
                     // Start the server.
@@ -237,6 +229,13 @@ namespace EchoRelay.Cli
 
         private static void Server_OnServerStarted(Server server)
         {
+            if (Options.EnableApi)
+            {
+                ApiServer = new ApiServer(server, new ApiSettings(apiKey: Options.ServerDBApiKey, advertise: Options.Advertise));
+                if(Options.Advertise != null)
+                    ApiServer.registerServiceOnCentralAPI(true);
+            }
+            
             // Print our server started message
             Log.Information("[SERVER] Server started");
 
