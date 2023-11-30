@@ -120,6 +120,21 @@ namespace EchoRelay.Core.Server.Services
             Server = server;
             Service = service;
             Address = context.Request.RemoteEndPoint.Address;
+
+            var apiKey = context.Request.Headers.Get("X-Api-Key");
+            if (apiKey != null && apiKey == Server.Settings.ServerDBApiKey)
+            {
+                var proxyAddress = context.Request.Headers.Get("X-Real-IP");
+                if (proxyAddress != null)
+                {
+                    try
+                    {
+                        Address = IPAddress.Parse(proxyAddress);
+                    }
+                    catch { }
+                }
+            }
+
             Port = (ushort)context.Request.RemoteEndPoint.Port;
             RequestUri = context.Request.Url!;
             Connection = connection;
@@ -203,7 +218,8 @@ namespace EchoRelay.Core.Server.Services
         public async Task Send(Packet packet)
         {
             // Send the provided packet through the client websocket connection.
-            await _sendLock.ExecuteLocked(async() => {
+            await _sendLock.ExecuteLocked(async () =>
+            {
                 await Connection.SendAsync(new ArraySegment<byte>(packet.Encode()), WebSocketMessageType.Binary, true, CancellationToken.None);
             });
 
