@@ -46,6 +46,16 @@ namespace EchoRelay.API
             var app = builder.Build();
             app.UseCors("AllowAll");
             
+            var lifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
+
+            // Register a callback for the ApplicationStopping event
+            lifetime.ApplicationStopping.Register(() =>
+            {
+                // Your shutdown logic or logging here
+                if(apiSettings.Advertise != null)
+                    registerServiceOnCentralAPI(false);
+            });
+            
             // Reduce logging noise
             app.UseSerilogRequestLogging();
 

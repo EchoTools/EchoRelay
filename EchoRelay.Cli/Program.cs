@@ -32,15 +32,6 @@ namespace EchoRelay.Cli
         /// </summary>
         private static ApiServer? ApiServer;
 
-
-        [DllImport("Kernel32")]
-        private static extern bool SetConsoleCtrlHandler(EventHandler handler, bool add);
-
-        private delegate bool EventHandler();
-        private static EventHandler? consoleCloseHandler;
-
-        // Enum to represent different CtrlTypes
-        
         public class CliOptions
         {
             [Option('d', "database", SetName = "filesystem", Required = false, HelpText = "specify database folder")]
@@ -174,9 +165,6 @@ namespace EchoRelay.Cli
                 Server.ServerDBService.Registry.OnGameServerUnregistered += Registry_OnGameServerUnregistered;
                 Server.ServerDBService.OnGameServerRegistrationFailure += ServerDBService_OnGameServerRegistrationFailure;
 
-                consoleCloseHandler += new EventHandler(ConsoleCloseHandler);
-                SetConsoleCtrlHandler(consoleCloseHandler, true);
-                
                 // Set up all verbose event handlers.
                 if (options.Debug || options.Verbose)
                 {
@@ -334,20 +322,6 @@ namespace EchoRelay.Cli
         private static void Server_OnServicePacketReceived(Core.Server.Services.Service service, Core.Server.Services.Peer sender, Core.Server.Messages.Packet packet)
         {
             packet.ForEach(p => Log.Debug($"[{service.Name}] ({sender.Address}:{sender.Port}) RECV: " + p));
-        }
-        
-        // Handler for the console close event
-        private static bool ConsoleCloseHandler()
-        {
-            if(Options?.Advertise != null)
-                ApiServer?.registerServiceOnCentralAPI(false);
-            Console.WriteLine("Console is closing. Performing cleanup...");
-            Server?.Stop();
-            
-            Thread.Sleep(1500);
-            
-            // Allow the program to exit
-            return true;
         }
     }
 }
