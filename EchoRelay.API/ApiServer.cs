@@ -1,6 +1,7 @@
 using System.Text;
 using EchoRelay.API.Public;
 using EchoRelay.Core.Server;
+using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Newtonsoft.Json;
 using Serilog;
 
@@ -55,21 +56,16 @@ namespace EchoRelay.API
                 app.UseSwaggerUI();
             }
             
-            app.UseWhen(context => context.Request.Path.StartsWithSegments("/servers"), branch =>
+            app.UseWhen(context => context.Request.Path.StartsWithSegments("/centralApi"), branch =>
+            {
+                branch.UseMiddleware<PublicApiAuthentication>();
+            });
+            
+            app.UseWhen(context => !context.Request.Path.StartsWithSegments("/centralApi"), branch =>
             {
                 branch.UseMiddleware<ApiAuthentication>();
             });
-            
-            app.UseWhen(context => context.Request.Path.StartsWithSegments("/sessions"), branch =>
-            {
-                branch.UseMiddleware<ApiAuthentication>();
-            });
-            
-            app.UseWhen(context => context.Request.Path.StartsWithSegments("/accounts"), branch =>
-            {
-                branch.UseMiddleware<ApiAuthentication>();
-            });
-            
+
             app.UseAuthorization();
             app.MapControllers();
 
@@ -91,9 +87,12 @@ namespace EchoRelay.API
 
                 // Create the content for the POST request using JSON data
                 var content = new StringContent(jsonData, Encoding.UTF8, "application/json");
-            
+
                 // Specify the URL of the external API
                 var apiUrl = $"api/setServerStatus/{RelayServer.PublicIPAddress}";
+
+                // Add the X-Api-Key header
+                HttpClient.DefaultRequestHeaders.Add("X-Api-Key", ApiSettings.CentralApiKey); // Replace "your-api-key" with the actual API key
 
                 // Perform the POST request
                 var response = await HttpClient.PostAsync(apiUrl, content);
@@ -104,6 +103,11 @@ namespace EchoRelay.API
             catch (HttpRequestException ex)
             {
                 Console.WriteLine($"An error occurred during the request: {ex.Message}");
+            }
+            finally
+            {
+                // Make sure to remove the header after the request to avoid unintended side effects
+                HttpClient.DefaultRequestHeaders.Remove("X-Api-Key");
             }
         }
     }

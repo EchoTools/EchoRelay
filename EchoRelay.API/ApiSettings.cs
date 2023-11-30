@@ -4,8 +4,10 @@
     {
         public string? ApiKey;
         public string? Advertise;
-        public ApiSettings(string? apiKey, string? advertise) {
+        public string? CentralApiKey;
+        public ApiSettings(string? apiKey, string? advertise, string? centralApiKey) {
             ApiKey = apiKey;
+            CentralApiKey = centralApiKey;
             Advertise = advertise;
         }
     }

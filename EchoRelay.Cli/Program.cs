@@ -54,7 +54,10 @@ namespace EchoRelay.Cli
 
             [Option("apikey", Required = false, Default = null, HelpText = "require game servers authenticate with API Key (via '?apikey=' query parameters).")]
             public string? ServerDBApiKey { get; set; }
-
+            
+            [Option("centralapikey", Required = false, Default = null, HelpText = "require central api authenticate with API Key (via '?centralapikey=' query parameters).")]
+            public string? CentralApiKey { get; set; }
+            
             [Option("forcematching", Required = false, Default = true, HelpText = "attempt to match player again if first match fails.")]
             public bool ForceMatching { get; set; }
 
@@ -231,7 +234,7 @@ namespace EchoRelay.Cli
         {
             if (Options.EnableApi)
             {
-                ApiServer = new ApiServer(server, new ApiSettings(apiKey: Options.ServerDBApiKey, advertise: Options.Advertise));
+                ApiServer = new ApiServer(server, new ApiSettings(apiKey: Options.ServerDBApiKey, advertise: Options.Advertise, centralApiKey:Options.CentralApiKey));
                 if(Options.Advertise != null)
                     ApiServer.registerServiceOnCentralAPI(true);
             }

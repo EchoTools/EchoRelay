@@ -6,7 +6,7 @@ using EchoRelay.Core.Server.Messages.ServerDB;
 
 namespace EchoRelay.API.Controllers.Public
 {
-    [Route("sessionsList/")]
+    [Route("centralApi/sessionsList/")]
     [ApiController]
     public class PublicSessionsController : ControllerBase
     {
