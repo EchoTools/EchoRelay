@@ -5,7 +5,7 @@ using EchoRelay.Core.Server;
 
 namespace EchoRelay.API.Controllers.Public
 {
-    [Route("relay/")]
+    [Route("centralApi/relay/")]
     [ApiController]
     public class PublicServersController : ControllerBase
     {
