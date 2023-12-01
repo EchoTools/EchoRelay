@@ -17,10 +17,12 @@ namespace EchoRelay.Core.Server.Services
         /// The <see cref="EchoRelay.Core.Server.Server"/> which the peer is connected to.
         /// </summary>
         public Server Server { get; }
+        public IService Service { get; }
+
         /// <summary>
         /// The <see cref="Services.Service"/> which the peer is connected to.
         /// </summary>
-        public Service Service { get; }
+        public IService service { get; }
         /// <summary>
         /// The websocket connection with the peer.
         /// </summary>
@@ -79,7 +81,7 @@ namespace EchoRelay.Core.Server.Services
         /// </summary>
         /// <param name="service">The <see cref="Service"/> the <see cref="Peer"/> authenticated to.</param>
         /// <param name="peer">The <see cref="Peer"/> which authenticated itself.</param>
-        public delegate void AuthenticatedEventHandler(Service service, Peer peer, XPlatformId userId);
+        public delegate void AuthenticatedEventHandler(IService service, Peer peer, XPlatformId userId);
         /// <summary>
         /// Event for a <see cref="Peer"/> authenticating within a <see cref="Service"/>, with a given <see cref="XPlatformId"/>.
         /// </summary>
@@ -91,7 +93,7 @@ namespace EchoRelay.Core.Server.Services
         /// <param name="service">The <see cref="Service"/> the <see cref="Peer"/> connected to.</param>
         /// <param name="peer">The <see cref="Peer"/> which sent the <see cref="Packet"/>.</param>
         /// <param name="packet">The <see cref="Packet"/> set by the <see cref="Peer"/>.</param>
-        public delegate void PacketReceivedEventHandler(Service service, Peer peer, Packet packet);
+        public delegate void PacketReceivedEventHandler(IService service, Peer peer, Packet packet);
         /// <summary>
         /// Event for a packet being received from a <see cref="Peer"/> connected to the <see cref="Service"/>.
         /// </summary>
@@ -102,7 +104,7 @@ namespace EchoRelay.Core.Server.Services
         /// <param name="service">The <see cref="Service"/> the <see cref="Peer"/> connected to.</param>
         /// <param name="peer">The <see cref="Peer"/> which is being sent the <see cref="Packet"/>.</param>
         /// <param name="packet">The <see cref="Packet"/> set by the <see cref="Peer"/>.</param>
-        public delegate void PacketSentEventHandler(Service service, Peer peer, Packet packet);
+        public delegate void PacketSentEventHandler(IService service, Peer peer, Packet packet);
         /// <summary>
         /// Event for a packet being sent from a <see cref="Peer"/> connected to the <see cref="Service"/>.
         /// </summary>
@@ -114,7 +116,7 @@ namespace EchoRelay.Core.Server.Services
         /// Initializes a <see cref="Peer"/> with the provided arguments.
         /// </summary>
         /// <param name="context">The <see cref="HttpListenerContext"/> used to accept the connection request.</param>
-        public Peer(Server server, Service service, HttpListenerContext context, WebSocket connection)
+        public Peer(Server server, IService service, HttpListenerContext context, WebSocket connection)
         {
             // Set our provided arguments.
             Server = server;

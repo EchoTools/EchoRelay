@@ -246,7 +246,7 @@ namespace EchoRelay
             }
         }
 
-        private void Server_OnServicePeerConnected(Service service, Peer peer)
+        private void Server_OnServicePeerConnected(IService service, Peer peer)
         {
             // Invoke the UI thread to perform updates.
             this.InvokeUIThread(() =>
@@ -265,7 +265,7 @@ namespace EchoRelay
             });
         }
 
-        private void Server_OnServicePeerDisconnected(Service service, Peer peer)
+        private void Server_OnServicePeerDisconnected(IService service, Peer peer)
         {
             // Invoke the UI thread to perform updates.
             this.InvokeUIThread(() =>
@@ -284,7 +284,7 @@ namespace EchoRelay
             });
         }
 
-        private void Server_OnServicePeerAuthenticated(Service service, Peer peer, XPlatformId userId)
+        private void Server_OnServicePeerAuthenticated(IService service, Peer peer, XPlatformId userId)
         {
             // Invoke the UI thread to perform updates.
             this.InvokeUIThread(() =>
@@ -294,7 +294,7 @@ namespace EchoRelay
             });
         }
 
-        private void Server_OnServicePacketReceived(EchoRelay.Core.Server.Services.Service service, EchoRelay.Core.Server.Services.Peer sender, EchoRelay.Core.Server.Messages.Packet packet)
+        private void Server_OnServicePacketReceived(EchoRelay.Core.Server.Services.IService service, EchoRelay.Core.Server.Services.Peer sender, EchoRelay.Core.Server.Messages.Packet packet)
         {
             // Invoke the UI thread to perform updates.
             this.InvokeUIThread(() =>
@@ -304,7 +304,7 @@ namespace EchoRelay
             });
         }
 
-        private void Server_OnServicePacketSent(EchoRelay.Core.Server.Services.Service service, EchoRelay.Core.Server.Services.Peer sender, EchoRelay.Core.Server.Messages.Packet packet)
+        private void Server_OnServicePacketSent(EchoRelay.Core.Server.Services.IService service, EchoRelay.Core.Server.Services.Peer sender, EchoRelay.Core.Server.Messages.Packet packet)
         {
             // Invoke the UI thread to perform updates.
             this.InvokeUIThread(() =>

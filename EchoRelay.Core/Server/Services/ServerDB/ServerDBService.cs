@@ -42,7 +42,7 @@ namespace EchoRelay.Core.Server.Services.ServerDB
         #endregion
 
         #region Functions
-        private void ServerDBService_OnPeerDisconnected(Service service, Peer peer)
+        private void ServerDBService_OnPeerDisconnected(IService service, Peer peer)
         {
             ClearPeerRegistration(peer);
         }

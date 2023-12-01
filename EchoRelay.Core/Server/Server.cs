@@ -307,7 +307,7 @@ namespace EchoRelay.Core.Server
         /// Registers a <see cref="Service"/>'s events to be forwarded to ones provided on a <see cref="Server"/>-level here.
         /// </summary>
         /// <param name="service">The <see cref="Service"/> to forward events from.</param>
-        public void RegisterServiceEvents(Service service)
+        public void RegisterServiceEvents(IService service)
         {
             // Forward all events from the service.
             service.OnPeerConnected += Service_OnPeerConnected;
@@ -327,24 +327,24 @@ namespace EchoRelay.Core.Server
         #endregion
 
         #region Event Handlers
-        private void Service_OnPeerConnected(Service service, Peer peer)
+        private void Service_OnPeerConnected(IService service, Peer peer)
         {
             OnServicePeerConnected?.Invoke(service, peer);
         }
-        private void Service_OnPeerDisconnected(Service service, Peer peer)
+        private void Service_OnPeerDisconnected(IService service, Peer peer)
         {
             OnServicePeerDisconnected?.Invoke(service, peer);
         }
-        private void Service_OnPeerAuthenticated(Service service, Peer peer, XPlatformId userId)
+        private void Service_OnPeerAuthenticated(IService service, Peer peer, XPlatformId userId)
         {
             OnServicePeerAuthenticated?.Invoke(service, peer, userId);
         }
-        private void Service_OnPacketReceived(Service service, Peer sender, Packet packet)
+        private void Service_OnPacketReceived(IService service, Peer sender, Packet packet)
         {
             OnServicePacketReceived?.Invoke(service, sender, packet);
         }
 
-        private void Service_OnPacketSent(Service service, Peer sender, Packet packet)
+        private void Service_OnPacketSent(IService service, Peer sender, Packet packet)
         {
             OnServicePacketSent?.Invoke(service, sender, packet);
         }

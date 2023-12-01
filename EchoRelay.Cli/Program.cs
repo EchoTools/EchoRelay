@@ -367,17 +367,17 @@ namespace EchoRelay.Cli
                 Log.Information($"[SERVER] client({client.Address}:{client.Port}) failed authorization");
         }
 
-        private static void Server_OnServicePeerConnected(Core.Server.Services.Service service, Core.Server.Services.Peer peer)
+        private static void Server_OnServicePeerConnected(Core.Server.Services.IService service, Core.Server.Services.Peer peer)
         {
             Log.Debug($"[{service.Name}] client({peer.Address}:{peer.Port}) connected");
         }
 
-        private static void Server_OnServicePeerDisconnected(Core.Server.Services.Service service, Core.Server.Services.Peer peer)
+        private static void Server_OnServicePeerDisconnected(Core.Server.Services.IService service, Core.Server.Services.Peer peer)
         {
             Log.Debug($"[{service.Name}] client({peer.Address}:{peer.Port}) disconnected");
         }
 
-        private static void Server_OnServicePeerAuthenticated(Core.Server.Services.Service service, Core.Server.Services.Peer peer, Core.Game.XPlatformId userId)
+        private static void Server_OnServicePeerAuthenticated(Core.Server.Services.IService service, Core.Server.Services.Peer peer, Core.Game.XPlatformId userId)
         {
             Log.Information($"[{service.Name}] client({peer.Address}:{peer.Port}) authenticated as account='{userId}' displayName='{peer.UserDisplayName}'");
         }
@@ -397,12 +397,12 @@ namespace EchoRelay.Cli
             Log.Error($"[{peer.Service.Name}] client({peer.Address}:{peer.Port}) failed to register game server: \"{failureMessage}\"");
         }
 
-        private static void Server_OnServicePacketSent(Core.Server.Services.Service service, Core.Server.Services.Peer sender, Core.Server.Messages.Packet packet)
+        private static void Server_OnServicePacketSent(Core.Server.Services.IService service, Core.Server.Services.Peer sender, Core.Server.Messages.Packet packet)
         {
             packet.ForEach(p => Log.Debug($"[{service.Name}] ({sender.Address}:{sender.Port}) SENT: " + p));
         }
 
-        private static void Server_OnServicePacketReceived(Core.Server.Services.Service service, Core.Server.Services.Peer sender, Core.Server.Messages.Packet packet)
+        private static void Server_OnServicePacketReceived(Core.Server.Services.IService service, Core.Server.Services.Peer sender, Core.Server.Messages.Packet packet)
         {
             packet.ForEach(p => Log.Debug($"[{service.Name}] ({sender.Address}:{sender.Port}) RECV: " + p));
         }

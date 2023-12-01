@@ -13,10 +13,15 @@ using Newtonsoft.Json;
 
 namespace EchoRelay.Core.Server.Services.Login
 {
+    public interface ILoginService : IService
+    {
+        bool CheckUserSessionValid(Guid session, XPlatformId userId);
+    }
+
     /// <summary>
     /// The login service is used to sign in, obtain a session, obtain logged in/other user profiles, update logged in profile, etc.
     /// </summary>
-    public class LoginService : Service
+    public class LoginService : Service, IService, ILoginService
     {
         #region Fields
         /// <summary>
@@ -76,7 +81,7 @@ namespace EchoRelay.Core.Server.Services.Login
         /// </summary>
         /// <param name="service">The service the peer disconnected from.</param>
         /// <param name="peer">The peer that disconnected.</param>
-        private void LoginService_OnPeerDisconnected(Service service, Peer peer)
+        private void LoginService_OnPeerDisconnected(IService service, Peer peer)
         {
             // If the peer had a session token, update its expiry time.
             Guid? session = peer.GetSessionData<Guid?>();
@@ -380,7 +385,7 @@ namespace EchoRelay.Core.Server.Services.Login
             // Verify the session details provided
             if (!CheckUserSessionValid(request.Session, request.UserId))
             {
-                await sender.Send(new LoggedInUserProfileFailure(request.UserId, HttpStatusCode.Unauthorized, 
+                await sender.Send(new LoggedInUserProfileFailure(request.UserId, HttpStatusCode.Unauthorized,
                     "Invalid Session\nYour session has expired or is no longer valid."));
                 return;
             }

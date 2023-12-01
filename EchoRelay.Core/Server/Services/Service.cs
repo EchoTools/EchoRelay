@@ -8,10 +8,26 @@ using System.Net.WebSockets;
 
 namespace EchoRelay.Core.Server.Services
 {
+    public interface IService
+    {
+        string Name { get; }
+        List<Peer> Peers { get; }
+        ConcurrentDictionary<(IPAddress, int), Peer> PeersByEndpoint { get; }
+        Server Server { get; }
+        IServerStorage Storage { get; }
+        SymbolCache SymbolCache { get; }
+
+        event Peer.PacketReceivedEventHandler? OnPacketReceived;
+        event Peer.PacketSentEventHandler? OnPacketSent;
+        event Peer.AuthenticatedEventHandler? OnPeerAuthenticated;
+        event Service.PeerConnectedEventHandler? OnPeerConnected;
+        event Service.PeerDisconnectedEventHandler? OnPeerDisconnected;
+    }
+
     /// <summary>
     /// An Echo VR websocket service that handles client connections.
     /// </summary>
-    public abstract class Service
+    public abstract class Service : IService
     {
         #region Properties
         /// <summary>
@@ -55,7 +71,7 @@ namespace EchoRelay.Core.Server.Services
         /// <summary>
         /// A lookup of peer endpoints (ip address, port) -> peer.
         /// </summary>
-        public ConcurrentDictionary<(IPAddress,int), Peer> PeersByEndpoint { get; }
+        public ConcurrentDictionary<(IPAddress, int), Peer> PeersByEndpoint { get; }
         #endregion
 
         #region Events
@@ -64,7 +80,7 @@ namespace EchoRelay.Core.Server.Services
         /// </summary>
         /// <param name="service">The <see cref="Service"/> the <see cref="Peer"/> connected to.</param>
         /// <param name="peer">The <see cref="Peer"/> which connected.</param>
-        public delegate void PeerConnectedEventHandler(Service service, Peer peer);
+        public delegate void PeerConnectedEventHandler(IService service, Peer peer);
         /// <summary>
         /// Event for a <see cref="Peer"/> connecting to a <see cref="Service"/>.
         /// </summary>
@@ -75,7 +91,7 @@ namespace EchoRelay.Core.Server.Services
         /// </summary>
         /// <param name="service">The <see cref="Service"/> the <see cref="Peer"/> disconnected from.</param>
         /// <param name="peer">The <see cref="Peer"/> which disconnected.</param>
-        public delegate void PeerDisconnectedEventHandler(Service service, Peer peer);
+        public delegate void PeerDisconnectedEventHandler(IService service, Peer peer);
         /// <summary>
         /// Event for a <see cref="Peer"/> disconnecting from a <see cref="Service"/>.
         /// </summary>
@@ -148,7 +164,7 @@ namespace EchoRelay.Core.Server.Services
                     Memory<byte> receiveBufferAtPosition = receiveBuffer;
                     int totalSize = 0;
                     WebSocketMessageType messageType = WebSocketMessageType.Close;
-                    while(true)
+                    while (true)
                     {
                         var receiveResult = await webSocket.ReceiveAsync(receiveBufferAtPosition, CancellationToken.None);
                         messageType = receiveResult.MessageType;
@@ -167,7 +183,7 @@ namespace EchoRelay.Core.Server.Services
                             Packet packet = Packet.Decode(packetBuffer);
 
                             // Fire the packet received event for this service.
-                            peer.InvokeReceiveEventHandler(packet);;
+                            peer.InvokeReceiveEventHandler(packet); ;
 
                             // Handle the packet
                             await HandlePacket(peer, packet);
@@ -207,19 +223,19 @@ namespace EchoRelay.Core.Server.Services
         #endregion
 
         #region Event Handlers
-        private void Peer_OnPacketSent(Service service, Peer peer, Packet packet)
+        private void Peer_OnPacketSent(IService service, Peer peer, Packet packet)
         {
             // Fire the sent event for the service.
             OnPacketSent?.Invoke(service, peer, packet);
         }
 
-        private void Peer_OnPeerAuthenticated(Service service, Peer peer, XPlatformId userId)
+        private void Peer_OnPeerAuthenticated(IService service, Peer peer, XPlatformId userId)
         {
             // Fire the sent event for the service.
             OnPeerAuthenticated?.Invoke(service, peer, userId);
         }
 
-        private void Peer_OnPacketReceived(Service service, Peer peer, Packet packet)
+        private void Peer_OnPacketReceived(IService service, Peer peer, Packet packet)
         {
             // Fire the sent event for the service.
             OnPacketReceived?.Invoke(service, peer, packet);
