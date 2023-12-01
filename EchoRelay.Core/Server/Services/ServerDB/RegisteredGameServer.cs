@@ -551,6 +551,9 @@ namespace EchoRelay.Core.Server.Services.ServerDB
         {
             // Lock throughout this method.
             await _accessLock.ExecuteLocked(() => {
+                if (SessionId != null)
+                    Registry.RegisteredGameServersBySessionId.Remove(SessionId.Value, out _);
+
                 // Reset all variables
                 SessionId = null;
                 SessionLobbyType = ERGameServerStartSession.LobbyType.Unassigned;

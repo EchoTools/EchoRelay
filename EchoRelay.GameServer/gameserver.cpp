@@ -297,6 +297,8 @@ VOID GameServerLib::RequestRegistration(INT64 serverId, CHAR* radId, EchoVR::Sym
 		return;
 	}
 
+	// TODO: Default port
+	
 	// Connect to the serverdb websocket service
 	this->tcpBroadcasterData->CreatePeer(&this->serverDbPeer, (const EchoVR::UriContainer*)&serverDbUriContainer);
 
