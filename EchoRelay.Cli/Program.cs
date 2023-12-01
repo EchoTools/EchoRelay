@@ -4,9 +4,9 @@ using EchoRelay.Core.Server;
 using EchoRelay.Core.Server.Services;
 using EchoRelay.Core.Server.Storage;
 using EchoRelay.Core.Server.Storage.Filesystem;
-using EchoRelay.Core.Server.Storage.Nakama;
 using EchoRelay.Core.Server.Storage.Types;
 using EchoRelay.Core.Utils;
+using EchoRelay.Nakama.Server.Storage.Nakama;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
@@ -34,6 +34,8 @@ namespace EchoRelay.Cli
         /// The update timer used to trigger a peer stats update on a given interval.
         /// </summary>
         private static System.Timers.Timer? peerStatsUpdateTimer;
+
+        public static EchoNakama nakamaClient { get; private set; }
 
         /// <summary>
         /// The CLI argument options for the application.
@@ -115,7 +117,8 @@ namespace EchoRelay.Cli
                     if (Options.NakamaUri != null)
                     {
                         // Use Nakama for storage
-                        serverStorage = await ConfigureNakamaAsync(Options.NakamaUri);
+                        nakamaClient = await ConfigureNakamaAsync(Options.NakamaUri);
+                        serverStorage = await NakamaServerStorage.ConnectNakamaStorageAsync(nakamaClient);
                     }
                     else if (Options.DatabasePath != null)
                     {
@@ -168,18 +171,30 @@ namespace EchoRelay.Cli
                         InitialDeployment.DeploySymbolCache(serverStorage, options.GameBasePath);
                     }
 
-                    // Create a server instance
-                    Server = new Server(serverStorage,
-                        new ServerSettings(
-                            port: (ushort)options.Port,
-                            serverDbApiKey: options.ServerDBApiKey,
-                            serverDBValidateServerEndpoint: options.ServerDBValidateGameServers,
-                            serverDBValidateServerEndpointTimeout: options.ServerDBValidateGameServersTimeout,
-                            favorPopulationOverPing: !options.LowPingMatching,
-                            forceIntoAnySessionIfCreationFails: options.ForceMatching
-                            )
-                        );
+                    var serverSettings = new ServerSettings(
+                                port: (ushort)options.Port,
+                                serverDbApiKey: options.ServerDBApiKey,
+                                serverDBValidateServerEndpoint: options.ServerDBValidateGameServers,
+                                serverDBValidateServerEndpointTimeout: options.ServerDBValidateGameServersTimeout,
+                                favorPopulationOverPing: !options.LowPingMatching,
+                                forceIntoAnySessionIfCreationFails: options.ForceMatching
+                                );
 
+                    if (Options.NakamaUri != null)
+                    {
+
+
+
+                        // Create a server instance
+                        Server = new Server(serverStorage,
+                                            serverSettings,
+                                            loginServiceFactory: server => new NLoginService(server, nakamaClient));
+                            
+                    } else
+                    {
+                        // Create a server instance
+                        Server = new Server(serverStorage, serverSettings);
+                    }
                     // Set up all event handlers.
                     Server.OnServerStarted += Server_OnServerStarted;
                     Server.OnServerStopped += Server_OnServerStopped;
@@ -198,7 +213,7 @@ namespace EchoRelay.Cli
                         Server.OnServicePacketReceived += Server_OnServicePacketReceived;
                     }
 
-                    if (Options.EnableApi)
+                    if (options.EnableApi)
                     {
                         // Start the API server.
                         _ = new ApiServer(Server, new ApiSettings(apiKey: options.ServerDBApiKey));
@@ -266,7 +281,7 @@ namespace EchoRelay.Cli
         /// </summary>
         /// <param name="nakamaUriString">The Nakama URI string specifying the Nakama server connection details.</param>
         /// <returns>An instance of <see cref="IServerStorage"/> representing the configured Nakama server storage.</returns>
-        private static async Task<IServerStorage> ConfigureNakamaAsync(string nakamaUriString)
+        private static async Task<EchoNakama> ConfigureNakamaAsync(string nakamaUriString)
         {
             // Validate the Nakama URI
             Uri _nakamaUri;
@@ -299,7 +314,9 @@ namespace EchoRelay.Cli
             // Configure the Nakama storage
             try
             {
-                return await NakamaServerStorage.ConnectNakamaStorageAsync(_nakamaUri.Scheme, _nakamaUri.Host, _nakamaUri.Port, _serverKey, _relayId);
+                return new EchoNakama(_nakamaUri, _serverKey, _relayId);
+               
+                
             }
             catch (Exception ex)
             {

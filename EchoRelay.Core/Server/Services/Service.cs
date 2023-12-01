@@ -22,6 +22,8 @@ namespace EchoRelay.Core.Server.Services
         event Peer.AuthenticatedEventHandler? OnPeerAuthenticated;
         event Service.PeerConnectedEventHandler? OnPeerConnected;
         event Service.PeerDisconnectedEventHandler? OnPeerDisconnected;
+
+        Task HandleConnection(HttpListenerContext context, WebSocket webSocket);
     }
 
     /// <summary>
@@ -133,7 +135,7 @@ namespace EchoRelay.Core.Server.Services
         /// Enters a communication loop with the accepted websocket connection.
         /// </summary>
         /// <param name="webSocket">The websocket to process messages for.</param>
-        internal async Task HandleConnection(HttpListenerContext context, WebSocket webSocket)
+        public async Task HandleConnection(HttpListenerContext context, WebSocket webSocket)
         {
             // Create a new peer from this connection and add it to our list of peers.
             Peer peer = new Peer(Server, this, context, webSocket);

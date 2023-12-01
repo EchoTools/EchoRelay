@@ -55,7 +55,7 @@ namespace EchoRelay.Core.Server
         /// <summary>
         /// The <see cref="LoginService"/> service hosted by this server.
         /// </summary>
-        public LoginService LoginService { get; private set; }
+        public ILoginService LoginService { get; private set; }
 
         /// <summary>
         /// The <see cref="MatchingService"/> service hosted by this server.
@@ -79,7 +79,7 @@ namespace EchoRelay.Core.Server
         /// <summary>
         /// A map of request paths to <see cref="Service"/>s which serve them.
         /// </summary>
-        private ReadOnlyDictionary<string, Service> _serviceMap;
+        private ReadOnlyDictionary<string, IService> _serviceMap;
         #endregion
 
         #region Events
@@ -142,31 +142,36 @@ namespace EchoRelay.Core.Server
         /// Initializes a new <see cref="Server"/> with the provided arguments.
         /// </summary>
         /// <param name="port">The port to bind the websocket server to.</param>
-        public Server(IServerStorage storage, ServerSettings settings)
+        public Server(IServerStorage storage,
+                      ServerSettings settings,
+                      Func<Server, ConfigService> configServiceFactory = null,
+                      Func<Server, ILoginService> loginServiceFactory = null,
+                      Func<Server, MatchingService> matchingServiceFactory = null,
+                      Func<Server, ServerDBService> serverDBServiceFactory = null,
+                      Func<Server, TransactionService> transactionServiceFactory = null)
         {
             // Set our properties.
             Storage = storage;
             Settings = settings;
             PublicIPAddress = null;
-   
-            // Create our services
-            ConfigService = new ConfigService(this);
+
+            ConfigService = configServiceFactory?.Invoke(this) ?? new ConfigService(this);
             RegisterServiceEvents(ConfigService);
 
-            LoginService = new LoginService(this);
+            LoginService = loginServiceFactory?.Invoke(this) ?? new LoginService(this);
             RegisterServiceEvents(LoginService);
 
-            MatchingService = new MatchingService(this);
+            MatchingService = matchingServiceFactory?.Invoke(this) ?? new MatchingService(this);
             RegisterServiceEvents(MatchingService);
 
-            ServerDBService = new ServerDBService(this);
+            ServerDBService = serverDBServiceFactory?.Invoke(this) ?? new ServerDBService(this);
             RegisterServiceEvents(ServerDBService);
 
-            TransactionService = new TransactionService(this);
+            TransactionService = transactionServiceFactory?.Invoke(this) ?? new TransactionService(this);
             RegisterServiceEvents(TransactionService);
 
             // Create a map of our services
-            _serviceMap = new Dictionary<string, Service>
+            _serviceMap = new Dictionary<string, IService>
             {
                 { Settings.ConfigServicePath.ToLower(), ConfigService },
                 { Settings.LoginServicePath.ToLower(), LoginService },

@@ -17,7 +17,7 @@ namespace EchoRelay.API.Controllers
     public class AccountsController : ControllerBase
     {
         static IServerStorage? Storage => ApiServer.Instance?.RelayServer.Storage;
-        static LoginService? LoginService => ApiServer.Instance?.RelayServer.LoginService;
+        static ILoginService? LoginService => ApiServer.Instance?.RelayServer.LoginService;
 
         [HttpGet]
         public IActionResult Get(int pageNumber = 1, int pageSize = 10)

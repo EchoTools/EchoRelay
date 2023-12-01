@@ -34,22 +34,19 @@ namespace EchoRelay.Nakama.Server.Storage.Nakama
         private ResourceProvider<SymbolCache> _symbolCache;
 
         public Client Client;
-        private Session _session;
+ 
+        private static EchoNakama _nakamaClient;
 
         public async Task<Session> RefreshSessionAsync()
         {
-            if (_session == null || _session.IsExpired)
-                return (Session)await Client.AuthenticateDeviceAsync(RelayId, create: true);
-            else
-                return (Session)await Client.SessionRefreshAsync(_session);
+            return (Session)await _nakamaClient.RefreshSessionAsync();
         }
         public string RelayId { get; }
 
-        public NakamaServerStorage(Client client, Session session, string relayId)
+        public NakamaServerStorage(EchoNakama nakamaClient)
         {
-            Client = client;
-            _session = session;
-            RelayId = relayId;
+            _nakamaClient = nakamaClient;
+            Client = nakamaClient.Client;
 
             // Create our resource containers
             _accessControlList = new NakamaResourceProvider<AccessControlListResource>(this, "AccessControlListResource", "AccessControlList");
@@ -61,11 +58,10 @@ namespace EchoRelay.Nakama.Server.Storage.Nakama
             _symbolCache = new NakamaResourceProvider<SymbolCache>(this, "SymbolCache", "symbolCache");
         }
 
-        public static async Task<NakamaServerStorage> ConnectNakamaStorageAsync(string scheme, string host, int port, string serverKey, string deviceId)
+        public static async Task<NakamaServerStorage> ConnectNakamaStorageAsync(EchoNakama nakamaClient)
         {
-            var client = new Client(scheme, host, port, serverKey);
-            var session = await client.AuthenticateDeviceAsync(deviceId, username: deviceId, create: true);
-            return new NakamaServerStorage(client, (Session)session, deviceId);
+            _ = await nakamaClient.RefreshSessionAsync();
+            return new NakamaServerStorage(nakamaClient);
         }
     }
 }
