@@ -56,6 +56,13 @@ namespace EchoRelay.API
                     registerServiceOnCentralAPI(false);
             });
             
+            lifetime.ApplicationStarted.Register(() =>
+            {
+                // Your startup logic or logging here
+                if(apiSettings.Advertise != null)
+                    registerServiceOnCentralAPI(true);
+            });
+            
             // Reduce logging noise
             app.UseSerilogRequestLogging();
 
@@ -87,7 +94,7 @@ namespace EchoRelay.API
             ApiSettings = newSettings;
             OnApiSettingsUpdated?.Invoke();
         }
-        public async void registerServiceOnCentralAPI(bool online)
+        private async void registerServiceOnCentralAPI(bool online)
         {
             try
             {

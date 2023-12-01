@@ -223,8 +223,6 @@ namespace EchoRelay.Cli
             if (Options.EnableApi)
             {
                 ApiServer = new ApiServer(server, new ApiSettings(apiKey: Options.ServerDBApiKey, advertise: Options.Advertise, centralApiKey:Options.CentralApiKey));
-                if(Options.Advertise != null)
-                    ApiServer.registerServiceOnCentralAPI(true);
             }
             
             // Print our server started message

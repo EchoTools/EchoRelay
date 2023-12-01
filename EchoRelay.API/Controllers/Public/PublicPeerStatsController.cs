@@ -5,7 +5,7 @@ using EchoRelay.Core.Server;
 
 namespace EchoRelay.API.Controllers.Public
 {
-    [Route("centralApi/peerStats/")]
+    [Route("centralapi/peerstats/")]
     [ApiController]
     public class PublicPeerStatsController : ControllerBase
     {
@@ -18,7 +18,7 @@ namespace EchoRelay.API.Controllers.Public
             {
                 if (ServerInfo == null)
                 {
-                    return StatusCode((int)HttpStatusCode.InternalServerError, "Registry is null");
+                    return StatusCode((int)HttpStatusCode.InternalServerError, "No server found");
                 }
 
                 var peerStats = new PublicPeerStats(ServerInfo);                
