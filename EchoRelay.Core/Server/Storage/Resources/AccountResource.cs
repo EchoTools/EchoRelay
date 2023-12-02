@@ -109,6 +109,41 @@ namespace EchoRelay.Core.Server.Storage.Types
         }
         #endregion
 
+        public void EnsureValidAccount(XPlatformId userId)
+        {
+            AccountResource newAccount = new();
+            Profile ??= new AccountProfile();
+            Profile.Client ??= new AccountClientProfile();
+            Profile.Server ??= new AccountServerProfile();
+
+            Profile.Server.XPlatformId = userId.ToString();
+            Profile.Client.XPlatformId = Profile.Server.XPlatformId;
+            string displayName = userId.PlatformCode == PlatformCode.DMO ? "Anonymous [DEMO]" : $"User [{RandomNumberGenerator.GetInt32(int.MaxValue).ToString("X")}]";
+            Profile.SetDisplayName(displayName ?? userId.ToString());
+            if (Profile.Client.NPE is null)
+            {
+                Profile.Client.NPE = new AccountClientProfile.NPESettings();
+                Profile.Client.NPE.Lobby.Completed = true;
+                Profile.Client.NPE.Movement.Completed = true;
+                Profile.Client.NPE.FirstMatch.Completed = true;
+                Profile.Client.NPE.ArenaBasics.Completed = true;
+            }
+
+            if (Profile.Client.Social is null)
+            {
+                Profile.Client.Social = new AccountClientProfile.SocialSettings();
+                Profile.Client.Social.SetupVersion = 1;
+                Profile.Client.Social.CommunityValuesVersion = 1;
+            }
+
+            if (Profile.Server.Developer is null)
+            {
+                Profile.Server.Developer = new AccountServerProfile.DeveloperSettings();
+                Profile.Server.Developer.DisableAfkTimeout = true; // prevent kicking of "no ovr" (demo) users.
+                Profile.Server.Developer.XPlatformId = AccountIdentifier.ToString(); // enables developer mode to allow other options
+            }
+        }
+
         #region Functions
         /// <summary>
         /// Obtains the key which the storage resource is indexed by.
@@ -156,7 +191,7 @@ namespace EchoRelay.Core.Server.Storage.Types
             if (string.IsNullOrEmpty(accountLock))
             {
                 ClearAccountLock();
-            } 
+            }
             else
             {
                 // Generate a new salt
@@ -777,8 +812,8 @@ namespace EchoRelay.Core.Server.Storage.Types
             /// <summary>
             /// The unlockable player rewards for a <see cref="AccountServerProfile"/>.
             /// </summary>
-            public class UnlocksSettings 
-            { 
+            public class UnlocksSettings
+            {
                 /// <summary>
                 /// Game stats for Echo Arena.
                 /// </summary>
@@ -856,7 +891,7 @@ namespace EchoRelay.Core.Server.Storage.Types
                 [JsonExtensionData]
                 public IDictionary<string, JToken> AdditionalData = new Dictionary<string, JToken>();
 
-                public DeveloperSettings(XPlatformId? accountId = null, bool disableAfkTimeout=false)
+                public DeveloperSettings(XPlatformId? accountId = null, bool disableAfkTimeout = false)
                 {
                     XPlatformId = accountId?.ToString();
                     DisableAfkTimeout = disableAfkTimeout;

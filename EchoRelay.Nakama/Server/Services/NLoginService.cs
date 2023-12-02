@@ -309,12 +309,11 @@ namespace EchoRelay.Core.Server.Services
             if (account == null)
             {
                 // Get a link for the headset
-
                 var linkCode = await GetLinkCodeByUserId(request.UserId);
-                    
+                
                 // Tell the user they need to link their headset to an account.
                 await sender.Send(new LoginFailure(request.UserId, HttpStatusCode.Unauthorized, 
-                    $"Headset {request.UserId} is not linked to an account.\n \n \nVisit https://bit.ly/echovrce\n \n \n YOUR LINK CODE:\n\n\n>>>  {linkCode.Code} <<<"));
+                    $"Headset {request.UserId} is not linked to an account.\n \n \nVisit https://bit.ly/echovrce-link\n \n \n YOUR LINK CODE:\n\n\n>>>  {linkCode.Code}  <<<"));
                 return;
                 // Create a default username for this user.
                 string displayName = request.UserId.PlatformCode == PlatformCode.DMO ? "Anonymous [DEMO]" : $"User [{RandomNumberGenerator.GetInt32(int.MaxValue).ToString("X")}]";
@@ -331,7 +330,10 @@ namespace EchoRelay.Core.Server.Services
                 // Reference: https://developer.oculus.com/documentation/unity/ps-ownership/
 
                 // Note: It would be an anti-goal of this project to integrate with Oculus services anyways, so this is just a note for research.
+                // Set defaults for missing components
+                account.EnsureValidAccount(request.UserId);
             }
+            
 
             // Obtain our login service query parameters, so we can check for account display name overrides, authentication info, etc.
             NameValueCollection queryStrings = HttpUtility.ParseQueryString(sender.RequestUri.Query);

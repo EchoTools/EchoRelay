@@ -6,6 +6,7 @@
     /// <typeparam name="K">The type of key the resource is indexed by.</typeparam>
     public interface IKeyedResource<K>
     {
+
         /// <summary>
         /// Obtains the key which the storage resource is indexed by.
         /// </summary>
