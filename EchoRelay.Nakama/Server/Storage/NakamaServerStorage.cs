@@ -1,10 +1,9 @@
 ﻿using EchoRelay.Core.Game;
-using EchoRelay.Core.Server.Storage;
 using EchoRelay.Core.Server.Storage.Resources;
 using EchoRelay.Core.Server.Storage.Types;
+using EchoRelay.Nakama;
 using Nakama;
-using Nk = Nakama;
-namespace EchoRelay.Nakama.Server.Storage.Nakama
+namespace EchoRelay.Core.Server.Storage
 {
     public class NakamaServerStorage : ServerStorage
     {

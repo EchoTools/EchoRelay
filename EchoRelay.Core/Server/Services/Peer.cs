@@ -3,6 +3,7 @@ using EchoRelay.Core.Server.Messages;
 using EchoRelay.Core.Utils;
 using System.Net;
 using System.Net.WebSockets;
+using Serilog;
 
 namespace EchoRelay.Core.Server.Services
 {
@@ -124,17 +125,25 @@ namespace EchoRelay.Core.Server.Services
             Address = context.Request.RemoteEndPoint.Address;
 
             var apiKey = context.Request.Headers.Get("X-Api-Key");
-            if (apiKey != null && apiKey == Server.Settings.ServerDBApiKey)
-            {
-                var proxyAddress = context.Request.Headers.Get("X-Real-IP");
-                if (proxyAddress != null)
+
+            // Support the X-Forwarded-For header for (multi-)proxied connections.
+            var xffHeader = context.Request.Headers.Get("X-Forwarded-For");
+            var XRealIPHeader = context.Request.Headers.Get("X-Real-IP");
+           try {
+                // Prefer the X-Forwarded-For header
+                if (!String.IsNullOrEmpty(xffHeader))
                 {
-                    try
-                    {
-                        Address = IPAddress.Parse(proxyAddress);
-                    }
-                    catch { }
+                    var proxyChain = xffHeader.Split(',').Select(s => IPAddress.Parse(s.Trim()));
+                    // First IP is the closest client
+                    Address = proxyChain.First();
+
+                } else if (!String.IsNullOrEmpty(XRealIPHeader))
+                {
+                    Address = IPAddress.Parse(XRealIPHeader);
                 }
+            }
+            catch (Exception ex) {
+                Log.Debug($"Error parsing proxy headers", ex);
             }
 
             Port = (ushort)context.Request.RemoteEndPoint.Port;

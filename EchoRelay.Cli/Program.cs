@@ -4,20 +4,15 @@ using EchoRelay.Core.Server;
 using EchoRelay.Core.Server.Services;
 using EchoRelay.Core.Server.Storage;
 using EchoRelay.Core.Server.Storage.Filesystem;
-using EchoRelay.Core.Server.Storage.Types;
 using EchoRelay.Core.Utils;
-using EchoRelay.Nakama.Server.Storage.Nakama;
+using EchoRelay.Nakama;
 using Microsoft.AspNetCore.WebUtilities;
-using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
 using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
-using System.Data.Common;
-using System.Diagnostics.Eventing.Reader;
 using System.Text.RegularExpressions;
-
 namespace EchoRelay.Cli
 {
     class Program

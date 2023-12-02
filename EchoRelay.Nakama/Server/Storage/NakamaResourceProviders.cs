@@ -1,14 +1,10 @@
-﻿using EchoRelay.Core.Server.Storage;
-using EchoRelay.Core.Server.Storage.Resources;
-using EchoRelay.Core.Server.Storage.Types;
+﻿using EchoRelay.Core.Server.Storage.Types;
 using EchoRelay.Core.Utils;
 using Nakama;
 using Newtonsoft.Json;
 using System.Collections.Concurrent;
-using System.ComponentModel;
-using System.Diagnostics.Eventing.Reader;
 
-namespace EchoRelay.Nakama.Server.Storage.Nakama
+namespace EchoRelay.Core.Server.Storage
 {
     /// <summary>
     /// A Nakama <see cref="ResourceProvider{V}"/> which storages a singular resource.
@@ -33,7 +29,6 @@ namespace EchoRelay.Nakama.Server.Storage.Nakama
 
             _objectCollection = objectCollection;
             _objectKey = objectKey;
-
         }
 
         protected override void OpenInternal()

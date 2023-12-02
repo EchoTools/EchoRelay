@@ -2,18 +2,17 @@
 using EchoRelay.Core.Server.Messages;
 using EchoRelay.Core.Server.Messages.Common;
 using EchoRelay.Core.Server.Messages.Login;
+using EchoRelay.Core.Server.Services.Login;
 using EchoRelay.Core.Server.Storage.Types;
 using EchoRelay.Core.Utils;
+using EchoRelay.Nakama;
 using Jitbit.Utils;
+using Nakama;
+using Newtonsoft.Json;
 using System.Collections.Specialized;
 using System.Net;
 using System.Security.Cryptography;
 using System.Web;
-using Newtonsoft.Json;
-using EchoRelay.Core.Server.Services.Login;
-using Nakama;
-using Microsoft.AspNetCore.Http;
-using EchoRelay.Nakama;
 
 namespace EchoRelay.Core.Server.Services
 {
