@@ -7,8 +7,8 @@ namespace EchoRelay.API.Public
 {
     public class PublicSessionInfo
     {
-        [JsonProperty("serverIp")]
-        public string ServerIp { get; set; }
+        [JsonProperty("serverAddress")]
+        public string ServerAddress { get; set; }
         
         [JsonProperty("sessionIp")]
         public string SessionIp { get; set; }
@@ -28,8 +28,8 @@ namespace EchoRelay.API.Public
         [JsonProperty("sessionId")]
         public string? SessionId { get; set; }
 
-        [JsonProperty("locked")]
-        public bool Locked { get; set; }
+        [JsonProperty("isLocked")]
+        public bool IsLocked { get; set; }
         
         [JsonProperty("gameServerId")]
         public ulong GameServerId { get; set; }
@@ -40,22 +40,22 @@ namespace EchoRelay.API.Public
         [JsonProperty("playerLimit")]
         public int PlayerLimit { get; set; }
         
-        [JsonProperty("public")]
-        public bool @Public { get; set; }
+        [JsonProperty("isPublic")]
+        public bool IsPublic { get; set; }
         
         public PublicSessionInfo(RegisteredGameServer gameServer)
         {
             SessionId = gameServer.SessionId.ToString();
             SessionIp = gameServer.ExternalAddress.ToString();
             GameServerId = gameServer.ServerId;
-            ServerIp = gameServer.ExternalAddress.ToString();
+            ServerAddress = gameServer.Server.PublicIPAddress?.ToString() ?? "localhost";
             Level = gameServer.SessionLevelSymbol == null ? "" : gameServer.Peer.Service.Server.SymbolCache.GetName(gameServer.SessionLevelSymbol.Value);
             GameMode = gameServer.SessionGameTypeSymbol == null ? "" : gameServer.Peer.Server.SymbolCache.GetName(gameServer.SessionGameTypeSymbol.Value);
             PlayerLimit = gameServer.SessionPlayerLimits.TotalPlayerLimit;
             ActivePlayerLimit = gameServer.SessionPlayerLimits.FixedActiveGameParticipantTarget;
             PlayerCount = gameServer.SessionPlayerSessions.Count;
-            Locked = gameServer.SessionLocked;
-            @Public = gameServer.SessionLobbyType == ERGameServerStartSession.LobbyType.Public;
+            IsLocked = gameServer.SessionLocked;
+            IsPublic = gameServer.SessionLobbyType == ERGameServerStartSession.LobbyType.Public;
             Region = gameServer.Peer.Service.Server.SymbolCache.GetName(gameServer.RegionSymbol) ?? "";
         }
     }

@@ -6,11 +6,11 @@ namespace EchoRelay.API.Public
     
     public class PublicPeerStats
     {
-        [JsonProperty("serverIp")]
-        public string ServerIp { get; set; }
+        [JsonProperty("serverAddress")]
+        public string ServerAddress { get; set; }
     
-        [JsonProperty("gameServers")]
-        public int GameServers { get; set; }
+        [JsonProperty("gameServer")]
+        public int GameServer { get; set; }
     
         [JsonProperty("login")]
         public int Login { get; set; }
@@ -29,8 +29,8 @@ namespace EchoRelay.API.Public
     
         public PublicPeerStats(Server server)
         {
-            ServerIp = server.PublicIPAddress?.ToString() ?? "localhost";
-            GameServers = server.ServerDBService.Registry.RegisteredGameServers.Count;
+            ServerAddress = server.PublicIPAddress?.ToString() ?? "localhost";
+            GameServer = server.ServerDBService.Registry.RegisteredGameServers.Count;
             Login = server.LoginService.Peers.Count;
             Matching = server.MatchingService.Peers.Count;
             Config = server.ConfigService.Peers.Count;
