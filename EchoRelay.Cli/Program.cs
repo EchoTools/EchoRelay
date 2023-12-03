@@ -150,7 +150,7 @@ namespace EchoRelay.Cli
                         InitialDeployment.DeployConfigs(serverStorage);
                     }
 
-                    if (!serverStorage.Documents.Exists(("main_menu", "main_menu")))
+                    if (!serverStorage.Documents.Exists(("eula", "en")))
                     {
                         Log.Warning("[SERVER] Document objects do not exist. Creating...");
                         InitialDeployment.DeployDocuments(serverStorage);
@@ -177,9 +177,6 @@ namespace EchoRelay.Cli
 
                     if (Options.NakamaUri != null)
                     {
-
-
-
                         // Create a server instance
                         Server = new Server(serverStorage,
                                             serverSettings,
