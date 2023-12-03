@@ -1,30 +1,30 @@
 using EchoRelay.Core.Server;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace EchoRelay.API.Public
 {
     
     public class PublicPeerStats
     {
-        [JsonProperty("serverAddress")]
+        [JsonPropertyName("serverAddress")]
         public string ServerAddress { get; set; }
     
-        [JsonProperty("gameServer")]
+        [JsonPropertyName("gameServer")]
         public int GameServer { get; set; }
     
-        [JsonProperty("login")]
+        [JsonPropertyName("login")]
         public int Login { get; set; }
     
-        [JsonProperty("matching")]
+        [JsonPropertyName("matching")]
         public int Matching { get; set; }
     
-        [JsonProperty("config")]
+        [JsonPropertyName("config")]
         public int Config { get; set; }
 
-        [JsonProperty("transaction")]
+        [JsonPropertyName("transaction")]
         public int Transaction { get; set; }
 
-        [JsonProperty("serverDb")]
+        [JsonPropertyName("serverDb")]
         public int ServerDb { get; set; }
     
         public PublicPeerStats(Server server)

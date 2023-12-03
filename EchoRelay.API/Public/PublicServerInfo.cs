@@ -1,50 +1,49 @@
 ﻿using EchoRelay.Core.Game;
 using EchoRelay.Core.Server;
-using EchoRelay.Core.Server.Services.ServerDB;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace EchoRelay.API.Public
 {
     public class PublicServerInfo
     {
-            [JsonProperty("serverAddress")] 
+            [JsonPropertyName("serverAddress")] 
             public string ServerAddress { get; set; }
             
-            [JsonProperty("apiServiceHost")]
-            public string? ApiServiceHost { get; set; }
+            [JsonPropertyName("apiServiceHost")]
+            public string? ApiServiceUrl  { get; set; }
             
-            [JsonProperty("configServiceHost")]
-            public string ConfigServiceHost { get; set; }
+            [JsonPropertyName("configServiceHost")]
+            public string ConfigServiceUrl { get; set; }
             
-            [JsonProperty("loginServiceHost")]
-            public string LoginServiceHost { get; set; }
+            [JsonPropertyName("loginServiceHost")]
+            public string LoginServiceUrl { get; set; }
             
-            [JsonProperty("matchingServiceHost")]
-            public string MatchingServiceHost { get; set; }
+            [JsonPropertyName("matchingServiceHost")]
+            public string MatchingServiceUrl { get; set; }
             
-            [JsonProperty("serverDbHost")]
-            public string? ServerDbHost { get; set; }
+            [JsonPropertyName("serverDbUrl")]
+            public string? ServerDbUrl { get; set; }
             
-            [JsonProperty("transactionServiceHost")]
-            public string TransactionServiceHost { get; set; }
+            [JsonPropertyName("transactionServiceHost")]
+            public string TransactionServiceUrl { get; set; }
             
-            [JsonProperty("publisherLock")]
+            [JsonPropertyName("publisherLock")]
             public string PublisherLock { get; set; }
             
-            [JsonProperty("isOnline")] 
+            [JsonPropertyName("isOnline")] 
             public bool IsOnline { get; set; }
             
             public PublicServerInfo(Server server, bool online = true)
             {
-                ServerAddress = server.PublicIPAddress?.ToString() ?? "localhost";
+                ServerAddress = server.PublicIPAddress?.ToString() ?? "localUrl";
 
                 ServiceConfig serviceConfig = server.Settings.GenerateServiceConfig(ServerAddress, hideKey:true);
-                ApiServiceHost = serviceConfig.ApiServiceHost;
-                ConfigServiceHost = serviceConfig.ConfigServiceHost;
-                LoginServiceHost = serviceConfig.LoginServiceHost;
-                MatchingServiceHost = serviceConfig.MatchingServiceHost;
-                ServerDbHost = serviceConfig.ServerDBServiceHost;
-                TransactionServiceHost = serviceConfig.TransactionServiceHost;
+                ApiServiceUrl = serviceConfig.ApiServiceHost;
+                ConfigServiceUrl = serviceConfig.ConfigServiceHost;
+                LoginServiceUrl = serviceConfig.LoginServiceHost;
+                MatchingServiceUrl = serviceConfig.MatchingServiceHost;
+                ServerDbUrl = serviceConfig.ServerDBServiceHost;
+                TransactionServiceUrl = serviceConfig.TransactionServiceHost;
                 PublisherLock = serviceConfig.PublisherLock ?? "rad15_live";
                 IsOnline = online;
             }
