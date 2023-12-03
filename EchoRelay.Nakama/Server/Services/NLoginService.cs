@@ -313,7 +313,7 @@ namespace EchoRelay.Core.Server.Services
                 
                 // Tell the user they need to link their headset to an account.
                 await sender.Send(new LoginFailure(request.UserId, HttpStatusCode.Unauthorized, 
-                    $"Headset {request.UserId} is not linked to an account.\n \n \nVisit https://bit.ly/echovrce-link\n \n \n YOUR LINK CODE:\n\n\n>>>  {linkCode.Code}  <<<"));
+                    $"Headset {request.UserId} is not linked to an account.\n \n \nVisit https://echovrce.com/link\n \n \n YOUR LINK CODE:\n\n\n>>>  {linkCode.Code}  <<<"));
                 return;
                 // Create a default username for this user.
                 string displayName = request.UserId.PlatformCode == PlatformCode.DMO ? "Anonymous [DEMO]" : $"User [{RandomNumberGenerator.GetInt32(int.MaxValue).ToString("X")}]";
