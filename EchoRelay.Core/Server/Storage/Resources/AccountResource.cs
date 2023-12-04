@@ -111,16 +111,18 @@ namespace EchoRelay.Core.Server.Storage.Types
 
         public void EnsureValidAccount(XPlatformId userId)
         {
-            AccountResource newAccount = new();
-            Profile ??= new AccountProfile();
-            Profile.Client ??= new AccountClientProfile();
-            Profile.Server ??= new AccountServerProfile();
+
+            Profile = Profile ?? new AccountProfile();
+            Profile.Client = Profile.Client ?? new AccountClientProfile();
+            Profile.Server = Profile.Server ?? new AccountServerProfile();
 
             Profile.Server.XPlatformId = userId.ToString();
             Profile.Client.XPlatformId = Profile.Server.XPlatformId;
+
             string displayName = userId.PlatformCode == PlatformCode.DMO ? "Anonymous [DEMO]" : $"User [{RandomNumberGenerator.GetInt32(int.MaxValue).ToString("X")}]";
             Profile.SetDisplayName(displayName ?? userId.ToString());
-            if (Profile.Client.NPE is null)
+
+            if (Profile.Client.NPE == null)
             {
                 Profile.Client.NPE = new AccountClientProfile.NPESettings();
                 Profile.Client.NPE.Lobby.Completed = true;
@@ -129,19 +131,30 @@ namespace EchoRelay.Core.Server.Storage.Types
                 Profile.Client.NPE.ArenaBasics.Completed = true;
             }
 
-            if (Profile.Client.Social is null)
+            if (Profile.Client.Social == null)
             {
-                Profile.Client.Social = new AccountClientProfile.SocialSettings();
-                Profile.Client.Social.SetupVersion = 1;
-                Profile.Client.Social.CommunityValuesVersion = 1;
+                Profile.Client.Social = new AccountClientProfile.SocialSettings
+                {
+                    SetupVersion = 1,
+                    CommunityValuesVersion = 1
+                };
             }
 
             if (Profile.Server.Developer is null)
             {
-                Profile.Server.Developer = new AccountServerProfile.DeveloperSettings();
-                Profile.Server.Developer.DisableAfkTimeout = true; // prevent kicking of "no ovr" (demo) users.
-                Profile.Server.Developer.XPlatformId = AccountIdentifier.ToString(); // enables developer mode to allow other options
+                Profile.Server.Developer = new AccountServerProfile.DeveloperSettings
+                {
+                    DisableAfkTimeout = true, // prevent kicking of "no ovr" (demo) users.
+                    XPlatformId = AccountIdentifier.ToString() // enables developer mode to allow other options
+                };
             }
+
+            Profile.Client.Social = new AccountClientProfile.SocialSettings
+            {
+                SetupVersion = 1,
+                CommunityValuesVersion = 1
+            };
+
         }
 
         #region Functions
