@@ -46,7 +46,6 @@ namespace EchoRelay.API
             app.UseCors("AllowAll");
             
             var lifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
-
             // Register a callback for the ApplicationStopping event
             lifetime.ApplicationStopping.Register(() =>
             {

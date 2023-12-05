@@ -45,10 +45,7 @@ namespace EchoRelay.Cli
 
             [Option("apikey", Required = false, Default = null, HelpText = "require game servers authenticate with API Key (via '?apikey=' query parameters).")]
             public string? ServerDBApiKey { get; set; }
-            
-            [Option("centralapikey", Required = false, Default = null, HelpText = "require central api authenticate with API Key (via '?centralapikey=' query parameters).")]
-            public string? CentralApiKey { get; set; }
-            
+
             [Option("forcematching", Required = false, Default = true, HelpText = "attempt to match player again if first match fails.")]
             public bool ForceMatching { get; set; }
 
@@ -82,6 +79,9 @@ namespace EchoRelay.Cli
             [Option("enable-api", Required = false, Default = false, HelpText = "enable the API server")]
             public bool EnableApi { get; set; } = true;
 
+            [Option("central-api-key", Required = false, Default = null, HelpText = "require central api authenticate with API Key (via '?centralapikey=' query parameters).")]
+            public string? CentralApiKey { get; set; }
+            
             [Option("notify-central-api", Required = false, Default = null,
                 HelpText = "notify central api when your relay is online")]
             public string? NotifyCentralApi { get; set; } = null;
