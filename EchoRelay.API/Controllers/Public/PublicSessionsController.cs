@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using EchoRelay.API.Public;
 using EchoRelay.Core.Server.Messages.ServerDB;
+using Serilog;
 
 namespace EchoRelay.API.Controllers.Public
 {
@@ -35,11 +36,12 @@ namespace EchoRelay.API.Controllers.Public
                         }
                     }
                 }
-
+                Log.Debug("Returning {0} public sessions", publicSessions.Count());
                 return Ok(publicSessions);
             }
             catch (Exception ex)
             {
+                Log.Error("Error getting public sessions: {0}", ex.Message);
                 return BadRequest(ex.Message);
             }
         }

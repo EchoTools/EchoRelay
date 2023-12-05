@@ -73,12 +73,12 @@ namespace EchoRelay.API
                 app.UseSwaggerUI();
             }
             
-            app.UseWhen(context => context.Request.Path.StartsWithSegments("/centralApi"), branch =>
+            app.UseWhen(context => context.Request.Path.StartsWithSegments("/centralapi"), branch =>
             {
                 branch.UseMiddleware<PublicApiAuthentication>();
             });
             
-            app.UseWhen(context => !context.Request.Path.StartsWithSegments("/centralApi"), branch =>
+            app.UseWhen(context => !context.Request.Path.StartsWithSegments("/centralapi"), branch =>
             {
                 branch.UseMiddleware<ApiAuthentication>();
             });
@@ -116,10 +116,12 @@ namespace EchoRelay.API
 
                 // Check if the request was successful (2xx status)
                 response.EnsureSuccessStatusCode();
+                
+                Log.Debug("Registered server on central API");
             }
             catch (HttpRequestException ex)
             {
-                Console.WriteLine($"An error occurred during the request: {ex.Message}");
+                Log.Error("Error registering server on central API: {0}", ex.Message);
             }
             finally
             {

@@ -2,6 +2,7 @@
 using System.Net;
 using EchoRelay.API.Public;
 using EchoRelay.Core.Server;
+using Serilog;
 
 namespace EchoRelay.API.Controllers.Public
 {
@@ -22,11 +23,12 @@ namespace EchoRelay.API.Controllers.Public
                 }
 
                 var peerStats = new PublicPeerStats(ServerInfo);                
-
+                Log.Debug("Returning peer stats");
                 return Ok(peerStats);
             }
             catch (Exception ex)
             {
+                Log.Error("Error getting public sessions: {0}", ex.Message);
                 return BadRequest(ex.Message);
             }
         }

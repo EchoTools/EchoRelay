@@ -2,6 +2,7 @@
 using System.Net;
 using EchoRelay.API.Public;
 using EchoRelay.Core.Server;
+using Serilog;
 
 namespace EchoRelay.API.Controllers.Public
 {
@@ -22,10 +23,12 @@ namespace EchoRelay.API.Controllers.Public
                 }
 
                 var serverInfo = new PublicServerInfo(ServiceServer);
+                Log.Debug("Returning server info");
                 return Ok(serverInfo);
             }
             catch (Exception ex)
             {
+                Log.Error("Error getting public sessions: {0}", ex.Message);
                 return BadRequest(ex.Message);
             }
         }
