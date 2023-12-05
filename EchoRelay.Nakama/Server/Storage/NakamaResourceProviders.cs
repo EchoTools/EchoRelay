@@ -58,9 +58,9 @@ namespace EchoRelay.Core.Server.Storage
             // do some reflection trickery
             var rpcMethodMap = new Dictionary<Type, string?>
             {
-                { typeof(AccessControlListResource), "echorelay/getAccessControlList" },
-                { typeof(ChannelInfoResource), "echorelay/getChannelInfo" },
-                { typeof(LoginSettingsResource), "echorelay/getLoginSettings" },
+                { typeof(AccessControlListResource), "echorelay/getaccesscontrollist" },
+                { typeof(ChannelInfoResource), "echorelay/getchannelinfo" },
+                { typeof(LoginSettingsResource), "echorelay/getloginsettings" },
                 { typeof(Core.Server.Storage.Resources.SymbolCache), null }
             };
 
@@ -109,15 +109,15 @@ namespace EchoRelay.Core.Server.Storage
             switch (resource)
             {
                 case AccessControlListResource accessControlListResource:
-                    await client.RpcAsync(session, "echorelay/setAccessControlList",
+                    await client.RpcAsync(session, "echorelay/setaccesscontrollist",
                         payload: JsonConvert.SerializeObject(accessControlListResource, StreamIO.JsonSerializerSettings));
                     break;
                 case ChannelInfoResource channelResource:
-                    await client.RpcAsync(session, "echorelay/setChannelInfo",
+                    await client.RpcAsync(session, "echorelay/setchannelinfo",
                         payload: JsonConvert.SerializeObject(channelResource, StreamIO.JsonSerializerSettings));
                     break;
                 case LoginSettingsResource loginSettingsResource:
-                    await client.RpcAsync(session, "echorelay/setLoginSettings",
+                    await client.RpcAsync(session, "echorelay/setloginsettings",
                         payload: JsonConvert.SerializeObject(loginSettingsResource, StreamIO.JsonSerializerSettings));
                     break;
             }
@@ -149,18 +149,18 @@ namespace EchoRelay.Core.Server.Storage
         /// </summary>
 
         private Func<K, string> _keySelectorFunc;
-        private readonly string _collection;
+        private Func<K, string> _typeSelectorFunc;
 
         private ConcurrentDictionary<K, (string key, V Resource)> _resources;
 
         public new NakamaServerStorage Storage { get; }
 
-        public NakamaResourceCollectionProvider(NakamaServerStorage storage, string collection, Func<K, string> keySelectorFunc) : base(storage)
+        public NakamaResourceCollectionProvider(NakamaServerStorage storage, Func<K, string> collectionSelectorFunc, Func<K, string> keySelectorFunc) : base(storage)
         {
             Storage = storage;
-            _collection = collection;
-            _resources = new ConcurrentDictionary<K, (string key, V)>();
+            _typeSelectorFunc = collectionSelectorFunc;
             _keySelectorFunc = keySelectorFunc;
+            _resources = new ConcurrentDictionary<K, (string key, V)>();
         }
 
         protected override void OpenInternal()
@@ -171,28 +171,7 @@ namespace EchoRelay.Core.Server.Storage
 
         public async Task OpenInternalAsync()
         {
-            var session = await Storage.RefreshSessionAsync();
-            var result = await Storage.Client.ListUsersStorageObjectsAsync(session, _collection, session.UserId, 100);
 
-            foreach (IApiStorageObject configObject in result.Objects)
-            {
-                try
-                {
-                    // Load the config resource.
-                    V? resource = JsonConvert.DeserializeObject<V>(configObject.Value);
-
-                    // Obtain the key for the resource
-                    K key = resource.Key();
-
-                    // Add it to our lookups
-                    _resources[key] = (configObject.Collection, resource);
-                }
-                catch (Exception ex)
-                {
-                    Close();
-                    throw new Exception($"Could not load resource {typeof(V).Name}: '{configObject.Key}'", ex);
-                }
-            }
         }
 
         protected override void CloseInternal()
@@ -207,7 +186,7 @@ namespace EchoRelay.Core.Server.Storage
 
         public override bool Exists(K key)
         {
-            return _resources.ContainsKey(key);
+            return GetInternal(key) != null;
         }
 
         protected override V? GetInternal(K key)
@@ -222,6 +201,7 @@ namespace EchoRelay.Core.Server.Storage
             var client = Storage.Client;
             var session = await Storage.RefreshSessionAsync();
             var objectId = _keySelectorFunc(key);
+            var objectType = _typeSelectorFunc(key);
             V? resource = default;
 
             // do some reflection trickery
@@ -232,7 +212,7 @@ namespace EchoRelay.Core.Server.Storage
                     {
                         // authenticate to the users account, if it exists
                         ISession userSession = await Storage.Client.AuthenticateDeviceAsync(id: objectId, create: false);
-                        IApiRpc data = await Storage.Client.RpcAsync(userSession, "echorelay/getAccount");
+                        IApiRpc data = await Storage.Client.RpcAsync(userSession, "echorelay/getaccount");
                         if (data.Payload == null)
                             return default;
 
@@ -257,7 +237,7 @@ namespace EchoRelay.Core.Server.Storage
                 case Type type when type == typeof(ConfigResource):
                     try
                     {
-                        IApiRpc data = await Storage.Client.RpcAsync(session, "echorelay/getConfig", payload: $"{{\"id\":\"{objectId}\"}}");
+                        IApiRpc data = await Storage.Client.RpcAsync(session, "echorelay/getconfig", payload: $"{{\"type\":\"{objectType}\",\"id\":\"{objectId}\"}}");
                         if (data.Payload == null)
                             return default;
                         return JsonConvert.DeserializeObject<V>(data.Payload);
@@ -269,7 +249,7 @@ namespace EchoRelay.Core.Server.Storage
                 case Type type when type == typeof(DocumentResource):
                     try
                     {
-                        IApiRpc data = await Storage.Client.RpcAsync(session, "echorelay/getDocument", payload: $"{{\"id\":\"{objectId}\"}}");
+                        IApiRpc data = await Storage.Client.RpcAsync(session, "echorelay/getdocument", payload: $"{{\"type\":\"{objectType}\",\"id\":\"{objectId}\"}}");
                         if (data.Payload == null)
                             return default;
                         return JsonConvert.DeserializeObject<V>(data.Payload);
@@ -301,17 +281,17 @@ namespace EchoRelay.Core.Server.Storage
                 case AccountResource accountResource:
                     var deviceId = resourceId;
                     ISession userSession = await client.AuthenticateDeviceAsync(id: deviceId, username: accountResource.Profile.Client.DisplayName, create: true);
-                    await client.RpcAsync(userSession, "echorelay/setAccount",
+                    await client.RpcAsync(userSession, "echorelay/setaccount",
                         payload: JsonConvert.SerializeObject(resource, StreamIO.JsonSerializerSettings));
                     break;
 
                 case ConfigResource configResource:
-                    await client.RpcAsync(session, "echorelay/setConfig",
+                    await client.RpcAsync(session, "echorelay/setconfig",
                         payload: JsonConvert.SerializeObject(resource, StreamIO.JsonSerializerSettings));
                     break;
 
                 case DocumentResource documentResource:
-                    await client.RpcAsync(session, "echorelay/setDocument",
+                    await client.RpcAsync(session, "echorelay/setdocument",
                         payload: JsonConvert.SerializeObject(resource, StreamIO.JsonSerializerSettings));
                     break;
 

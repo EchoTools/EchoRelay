@@ -50,9 +50,9 @@ namespace EchoRelay.Core.Server.Storage
             // Create our resource containers
             _accessControlList = new NakamaResourceProvider<AccessControlListResource>(this, "AccessControlListResource", "AccessControlList");
             _channelInfo = new NakamaResourceProvider<ChannelInfoResource>(this, "ChannelInfo", "channelInfo");
-            _accounts = new NakamaResourceCollectionProvider<XPlatformId, AccountResource>(this, "Account", x => $"{x}");
-            _configs = new NakamaResourceCollectionProvider<(string Type, string Identifier), ConfigResource>(this, "Config", x => $"{x.Identifier}");
-            _documents = new NakamaResourceCollectionProvider<(string Type, string Language), DocumentResource>(this, "Document", x => $"{x.Type}_{x.Language}");
+            _accounts = new NakamaResourceCollectionProvider<XPlatformId, AccountResource>(this, x => "Account", x => $"{x}");
+            _configs = new NakamaResourceCollectionProvider<(string Type, string Identifier), ConfigResource>(this, x => x.Type, x => x.Identifier);
+            _documents = new NakamaResourceCollectionProvider<(string Type, string Language), DocumentResource>(this,  x => x.Type, x => $"{x.Type}_{x.Language}");
             _loginSettings = new NakamaResourceProvider<LoginSettingsResource>(this, "LoginSettings", "loginSettings");
             _symbolCache = new NakamaResourceProvider<SymbolCache>(this, "SymbolCache", "symbolCache");
         }
