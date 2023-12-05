@@ -1,4 +1,3 @@
-using System.Text.Json.Serialization;
 using EchoRelay.Core.Server.Messages.ServerDB;
 using EchoRelay.Core.Server.Services.ServerDB;
 using Newtonsoft.Json;
@@ -7,40 +6,40 @@ namespace EchoRelay.API.Public
 {
     public class PublicSessionInfo
     {
-        [JsonPropertyName("serverAddress")]
+        [JsonProperty("serverAddress")]
         public string ServerAddress { get; set; }
         
-        [JsonPropertyName("sessionIp")]
+        [JsonProperty("sessionIp")]
         public string SessionIp { get; set; }
 
-        [JsonPropertyName("region")]
+        [JsonProperty("region")]
         public string Region { get; set; }
         
-        [JsonPropertyName("level")]
+        [JsonProperty("level")]
         public string? Level { get; set; }
         
-        [JsonPropertyName("gameMode")]
+        [JsonProperty("gameMode")]
         public string? GameMode { get; set; }
         
-        [JsonPropertyName("playerCount")]
+        [JsonProperty("playerCount")]
         public int PlayerCount { get; set; }
         
-        [JsonPropertyName("sessionId")]
+        [JsonProperty("sessionId")]
         public string? SessionId { get; set; }
 
-        [JsonPropertyName("isLocked")]
+        [JsonProperty("isLocked")]
         public bool IsLocked { get; set; }
         
-        [JsonPropertyName("gameServerId")]
+        [JsonProperty("gameServerId")]
         public ulong GameServerId { get; set; }
         
-        [JsonPropertyName("activePlayerLimit")]
+        [JsonProperty("activePlayerLimit")]
         public int? ActivePlayerLimit { get; set; }
 
-        [JsonPropertyName("playerLimit")]
+        [JsonProperty("playerLimit")]
         public int PlayerLimit { get; set; }
         
-        [JsonPropertyName("isPublic")]
+        [JsonProperty("isPublic")]
         public bool IsPublic { get; set; }
         
         public PublicSessionInfo(RegisteredGameServer gameServer)

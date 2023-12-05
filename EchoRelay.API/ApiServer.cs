@@ -1,7 +1,6 @@
 using System.Text;
 using EchoRelay.API.Public;
 using EchoRelay.Core.Server;
-using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Newtonsoft.Json;
 using Serilog;
 
@@ -36,11 +35,11 @@ namespace EchoRelay.API
                            .AllowAnyHeader()
                 )
             );
-            builder.Services.AddControllers().AddApplicationPart(typeof(ApiServer).Assembly);
+            builder.Services.AddControllers().AddApplicationPart(typeof(ApiServer).Assembly).AddNewtonsoftJson();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
-
+            
             builder.Host.UseSerilog();
 
             var app = builder.Build();
