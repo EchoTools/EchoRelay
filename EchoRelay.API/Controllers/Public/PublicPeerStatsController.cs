@@ -18,7 +18,7 @@ namespace EchoRelay.API.Controllers.Public
             {
                 if (ServerInfo == null)
                 {
-                    return StatusCode((int)HttpStatusCode.InternalServerError, "No server found");
+                    return StatusCode((int)HttpStatusCode.NotFound, "No server found");
                 }
 
                 var peerStats = new PublicPeerStats(ServerInfo);                

@@ -82,9 +82,9 @@ namespace EchoRelay.Cli
             [Option("enable-api", Required = false, Default = false, HelpText = "enable the API server")]
             public bool EnableApi { get; set; } = true;
 
-            [Option("advertise", Required = false, Default = null,
-                HelpText = "advertise central api when your relay is online")]
-            public string? Advertise { get; set; } = null;
+            [Option("notify-central-api", Required = false, Default = null,
+                HelpText = "notify central api when your relay is online")]
+            public string? NotifyCentralApi { get; set; } = null;
 
         }
 
@@ -222,7 +222,7 @@ namespace EchoRelay.Cli
         {
             if (Options.EnableApi)
             {
-                ApiServer = new ApiServer(server, new ApiSettings(apiKey: Options.ServerDBApiKey, advertise: Options.Advertise, centralApiKey:Options.CentralApiKey));
+                ApiServer = new ApiServer(server, new ApiSettings(apiKey: Options.ServerDBApiKey, notifyCentralApi: Options.NotifyCentralApi, centralApiKey:Options.CentralApiKey));
             }
             
             // Print our server started message

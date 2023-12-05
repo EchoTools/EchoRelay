@@ -26,7 +26,7 @@ namespace EchoRelay.API
             RelayServer = relayServer;
             ApiSettings = apiSettings;
             HttpClient = new HttpClient();
-            HttpClient.BaseAddress = new Uri(ApiSettings.Advertise);
+            HttpClient.BaseAddress = new Uri(ApiSettings.NotifyCentralApi);
 
             var builder = WebApplication.CreateBuilder();
             builder.Services.AddCors(options =>
@@ -52,14 +52,14 @@ namespace EchoRelay.API
             lifetime.ApplicationStopping.Register(() =>
             {
                 // Your shutdown logic or logging here
-                if(apiSettings.Advertise != null)
+                if(apiSettings.NotifyCentralApi != null)
                     registerServiceOnCentralAPI(false);
             });
             
             lifetime.ApplicationStarted.Register(() =>
             {
                 // Your startup logic or logging here
-                if(apiSettings.Advertise != null)
+                if(apiSettings.NotifyCentralApi != null)
                     registerServiceOnCentralAPI(true);
             });
             
