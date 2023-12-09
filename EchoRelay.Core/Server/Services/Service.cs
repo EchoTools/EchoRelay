@@ -2,6 +2,7 @@
 using EchoRelay.Core.Server.Messages;
 using EchoRelay.Core.Server.Storage;
 using EchoRelay.Core.Server.Storage.Resources;
+using Serilog;
 using System.Collections.Concurrent;
 using System.Net;
 using System.Net.WebSockets;
@@ -200,6 +201,11 @@ namespace EchoRelay.Core.Server.Services
                             throw new WebSocketException("Received an unexpected websocket message type");
                     }
                 }
+            } catch (Exception e)
+            {
+
+                // Close the connection gracefully.
+                await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
             }
             finally
             {
@@ -212,6 +218,7 @@ namespace EchoRelay.Core.Server.Services
 
                 // Fire the peer disconnected event
                 OnPeerDisconnected?.Invoke(this, peer);
+                await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
             }
         }
 
