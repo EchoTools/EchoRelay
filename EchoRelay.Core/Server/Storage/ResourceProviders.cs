@@ -133,6 +133,7 @@ namespace EchoRelay.Core.Server.Storage
                 OnLoaded?.Invoke(Storage, resource);
             return resource;
         }
+
         protected abstract V? GetInternal(K key);
         public void Set(V resource)
         {

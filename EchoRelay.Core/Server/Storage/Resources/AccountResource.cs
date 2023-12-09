@@ -48,7 +48,7 @@ namespace EchoRelay.Core.Server.Storage.Types
         /// Indicates whether the account is currently banned.
         /// </summary>
         [JsonIgnore]
-        public bool Banned => BannedUntil != null && BannedUntil > DateTime.UtcNow;
+        public bool Banned => BannedUntil > DateTime.UtcNow;
 
         /// <summary>
         /// The platform account identifier (unique user identifier) for the account.
@@ -94,17 +94,21 @@ namespace EchoRelay.Core.Server.Storage.Types
             // Set acceptance of community guidelines, if requested.
             if (completedCommunityGuidelines)
             {
-                Profile.Client.Social = new AccountClientProfile.SocialSettings();
-                Profile.Client.Social.SetupVersion = 1;
-                Profile.Client.Social.CommunityValuesVersion = 1;
+                Profile.Client.Social = new AccountClientProfile.SocialSettings
+                {
+                    SetupVersion = 1,
+                    CommunityValuesVersion = 1
+                };
             }
 
             // Set developer settings
             if (disableAfkTimeout)
             {
-                Profile.Server.Developer = new AccountServerProfile.DeveloperSettings();
-                Profile.Server.Developer.DisableAfkTimeout = true; // prevent kicking of "no ovr" (demo) users.
-                Profile.Server.Developer.XPlatformId = userId.ToString(); // enables developer mode to allow other options
+                Profile.Server.Developer = new AccountServerProfile.DeveloperSettings
+                {
+                    DisableAfkTimeout = disableAfkTimeout, // prevent kicking of "no ovr" (demo) users
+                    XPlatformId = userId.ToString() // enables developer mode to allow other options
+                };
             }
         }
         #endregion
@@ -112,15 +116,17 @@ namespace EchoRelay.Core.Server.Storage.Types
         public void EnsureValidAccount(XPlatformId userId)
         {
 
-            Profile = Profile ?? new AccountProfile();
-            Profile.Client = Profile.Client ?? new AccountClientProfile();
-            Profile.Server = Profile.Server ?? new AccountServerProfile();
+            Profile ??= new AccountProfile();
+            Profile.Client ??= new AccountClientProfile();
+            Profile.Server ??= new AccountServerProfile();
 
             Profile.Server.XPlatformId = userId.ToString();
             Profile.Client.XPlatformId = Profile.Server.XPlatformId;
 
-            string displayName = userId.PlatformCode == PlatformCode.DMO ? "Anonymous [DEMO]" : $"User [{RandomNumberGenerator.GetInt32(int.MaxValue).ToString("X")}]";
-            Profile.SetDisplayName(displayName ?? userId.ToString());
+            string fallbackDisplayName = userId.PlatformCode == PlatformCode.DMO ? "Anonymous [DEMO]" : $"User [{RandomNumberGenerator.GetInt32(int.MaxValue).ToString("X")}]";
+
+            Profile.Server.DisplayName ??= fallbackDisplayName;
+            Profile.Client.DisplayName ??= fallbackDisplayName;
 
             if (Profile.Client.NPE == null)
             {
@@ -131,23 +137,17 @@ namespace EchoRelay.Core.Server.Storage.Types
                 Profile.Client.NPE.ArenaBasics.Completed = true;
             }
 
-            if (Profile.Client.Social == null)
+            Profile.Client.Social ??= new AccountClientProfile.SocialSettings
             {
-                Profile.Client.Social = new AccountClientProfile.SocialSettings
-                {
-                    SetupVersion = 1,
-                    CommunityValuesVersion = 1
-                };
-            }
+                SetupVersion = 1,
+                CommunityValuesVersion = 1
+            };
 
-            if (Profile.Server.Developer is null)
+            Profile.Server.Developer ??= new AccountServerProfile.DeveloperSettings
             {
-                Profile.Server.Developer = new AccountServerProfile.DeveloperSettings
-                {
-                    DisableAfkTimeout = true, // prevent kicking of "no ovr" (demo) users.
-                    XPlatformId = AccountIdentifier.ToString() // enables developer mode to allow other options
-                };
-            }
+                DisableAfkTimeout = true, // prevent kicking of "no ovr" (demo) users.
+                XPlatformId = AccountIdentifier.ToString() // enables developer mode to allow other options
+            };
 
             Profile.Client.Social = new AccountClientProfile.SocialSettings
             {
@@ -378,13 +378,13 @@ namespace EchoRelay.Core.Server.Storage.Types
                 /// The latest version of community values guidelines which has been accepted.
                 /// </summary>
                 [JsonProperty("community_values_version")]
-                public long? CommunityValuesVersion { get; set; }
+                public long? CommunityValuesVersion { get; set; } = 0;
 
                 /// <summary>
                 /// The latest setup version which has been accepted.
                 /// </summary>
                 [JsonProperty("setup_version")]
-                public long? SetupVersion { get; set; }
+                public long? SetupVersion { get; set; } = 0;
 
                 /// <summary>
                 /// Additional fields which are not caught explicitly are retained here.
@@ -438,25 +438,25 @@ namespace EchoRelay.Core.Server.Storage.Types
                 /// Indicates whether the onboarding tutorial for the lobby has been completed.
                 /// </summary>
                 [JsonProperty("lobby")]
-                public Status Lobby { get; set; } = new Status();
+                public Status Lobby { get; set; } = new Status(true);
 
                 /// <summary>
                 /// Indicates whether the onboarding tutorial for the first match has been completed.
                 /// </summary>
                 [JsonProperty("firstmatch")]
-                public Status FirstMatch { get; set; } = new Status();
+                public Status FirstMatch { get; set; } = new Status(true);
 
                 /// <summary>
                 /// Indicates whether the onboarding tutorial for player movement has been completed.
                 /// </summary>
                 [JsonProperty("movement")]
-                public Status Movement { get; set; } = new Status();
+                public Status Movement { get; set; } = new Status(true);
 
                 /// <summary>
                 /// Indicates whether the onboarding tutorial for arena has been completed.
                 /// </summary>
                 [JsonProperty("arenabasics")]
-                public Status ArenaBasics { get; set; } = new Status();
+                public Status ArenaBasics { get; set; } = new Status(true);
 
                 /// <summary>
                 /// Additional fields which are not caught explicitly are retained here.
