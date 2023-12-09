@@ -393,6 +393,7 @@ namespace EchoRelay.Core.Server.Services.Login
             // Verify the session details provided
             if (!CheckUserSessionValid(request.Session, request.UserId))
             {
+                Log.Error($"Invalid session for {request.UserId}");
                 await sender.Send(new LoggedInUserProfileFailure(request.UserId, HttpStatusCode.Unauthorized,
                     "Invalid Session\nYour session has expired or is no longer valid."));
                 return;
@@ -402,6 +403,7 @@ namespace EchoRelay.Core.Server.Services.Login
             AccountResource? account = Storage.Accounts.Get(request.UserId);
             if (account == null)
             {
+                Log.Error($"Failed to obtain profile for {request.UserId}");
                 await sender.Send(new LoggedInUserProfileFailure(request.UserId, HttpStatusCode.InternalServerError,
                     "Profile Error\nUnable to load your account due to a server issue."));
                 return;
@@ -422,6 +424,7 @@ namespace EchoRelay.Core.Server.Services.Login
             AccountResource? account = Storage.Accounts.Get(request.UserId);
             if (account == null)
             {
+                Log.Error($"Failed to obtain profile for ");
                 await sender.Send(new OtherUserProfileFailure(request.UserId, HttpStatusCode.InternalServerError,
                     "Profile Error\nUnable to load your account due to a server issue."));
                 return;
@@ -442,6 +445,7 @@ namespace EchoRelay.Core.Server.Services.Login
             AccountResource? account = Storage.Accounts.Get(request.UserId);
             if (account == null)
             {
+                Log.Error($"Failed to obtain profile for {request.UserId}");
                 // TODO: Failure message!
                 return;
             }
@@ -455,6 +459,7 @@ namespace EchoRelay.Core.Server.Services.Login
                 // Verify we have an account and the identifier didn't change (avoids overwriting another profile in storage, as it is the storage key).
                 if (mergedProfile == null || mergedProfile.XPlatformId != request.UserId.ToString())
                 {
+                    Log.Error($"Invalid account identifier for {request.UserId}");
                     // TODO: Send UpdateProfileFailure(?)
                     return;
                 }
@@ -478,7 +483,8 @@ namespace EchoRelay.Core.Server.Services.Login
             // Verify the session details provided
             if (!CheckUserSessionValid(request.Session, request.UserId))
             {
-                await sender.Send(new UpdateProfileFailure(request.UserId, HttpStatusCode.BadRequest, "Authentication failed"));
+                Log.Error($"Invalid session for {request.UserId}");
+                await sender.Send(new UpdateProfileFailure(request.UserId, HttpStatusCode.BadRequest, "Invalid session"));
                 await sender.Send(new TcpConnectionUnrequireEvent());
                 return;
             }
@@ -487,7 +493,8 @@ namespace EchoRelay.Core.Server.Services.Login
             AccountResource? account = Storage.Accounts.Get(request.UserId);
             if (account == null)
             {
-                await sender.Send(new UpdateProfileFailure(request.UserId, HttpStatusCode.BadRequest, "Failed to obtain profile"));
+                Log.Error($"Failed to obtain profile for {request.UserId}");
+                await sender.Send(new UpdateProfileFailure(request.UserId, HttpStatusCode.InternalServerError, "Failed to obtain profile"));
                 await sender.Send(new TcpConnectionUnrequireEvent());
                 return;
             }
@@ -495,6 +502,7 @@ namespace EchoRelay.Core.Server.Services.Login
             // Verify the account identifier did not change (avoids overwriting another profile in storage, as it is the storage key).
             if (request.ClientProfile.XPlatformId != request.UserId.ToString())
             {
+                Log.Error($"Invalid account identifier for {request.UserId}");
                 await sender.Send(new UpdateProfileFailure(request.UserId, HttpStatusCode.BadRequest, "Invalid account identifier"));
                 await sender.Send(new TcpConnectionUnrequireEvent());
                 return;
@@ -544,11 +552,13 @@ namespace EchoRelay.Core.Server.Services.Login
             // If we couldn't resolve the name or language, return a failure.
             if (nameSymbol == null)
             {
+                Log.Error("Could not resolve symbol for document name");
                 await sender.Send(new DocumentFailure(1, 0, $"Could not resolve symbol for document name"));
                 return;
             }
             if (languageSymbol == null)
             {
+                Log.Error("Could not resolve symbol for document language");
                 await sender.Send(new DocumentFailure(1, 0, $"Could not resolve symbol for document language"));
                 return;
             }
@@ -557,6 +567,7 @@ namespace EchoRelay.Core.Server.Services.Login
             DocumentResource? resource = Storage.Documents.Get((request.Name, request.Language));
             if (resource == null)
             {
+                Log.Error("Document not found: {Name} {Language}", request.Name, request.Language);
                 await sender.Send(new DocumentFailure(1, 0, $"Could not find document"));
                 return;
             }
@@ -566,5 +577,6 @@ namespace EchoRelay.Core.Server.Services.Login
             await sender.Send(new TcpConnectionUnrequireEvent());
         }
         #endregion
+
     }
 }
