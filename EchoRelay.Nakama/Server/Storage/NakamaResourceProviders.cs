@@ -165,12 +165,6 @@ namespace EchoRelay.Core.Server.Storage
 
         protected override void OpenInternal()
         {
-            var task = Task.Run(async () => { await OpenInternalAsync(); });
-            task.Wait();
-        }
-
-        public async Task OpenInternalAsync()
-        {
 
         }
 
