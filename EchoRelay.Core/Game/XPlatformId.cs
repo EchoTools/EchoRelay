@@ -1,4 +1,5 @@
 ﻿using EchoRelay.Core.Utils;
+using Newtonsoft.Json;
 
 namespace EchoRelay.Core.Game
 {
@@ -20,6 +21,7 @@ namespace EchoRelay.Core.Game
         /// <summary>
         /// The platform code the identifier belongs to.
         /// </summary>
+        [JsonProperty("platform_code")]
         public PlatformCode PlatformCode
         {
             get { return (PlatformCode)_platformCode; }
@@ -28,6 +30,7 @@ namespace EchoRelay.Core.Game
         /// <summary>
         /// The identifier of the account on the given platform.
         /// </summary>
+        [JsonProperty("account_id")]
         public ulong AccountId;
         #endregion
 
