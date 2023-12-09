@@ -2,6 +2,7 @@
 using EchoRelay.API;
 using EchoRelay.Core.Server;
 using EchoRelay.Core.Server.Services;
+using EchoRelay.Core.Server.Services.Login;
 using EchoRelay.Core.Server.Storage;
 using EchoRelay.Core.Server.Storage.Filesystem;
 using EchoRelay.Core.Utils;
@@ -146,7 +147,7 @@ namespace EchoRelay.Cli
 
                     if (!serverStorage.Configs.Exists(("main_menu", "main_menu")))
                     {
-                        Log.Warning("[SERVER] Configs objects do not exist. Creating...");
+                        Log.Warning("[SERVER] Config objects do not exist. Creating...");
                         InitialDeployment.DeployConfigs(serverStorage);
                     }
 
@@ -408,12 +409,12 @@ namespace EchoRelay.Cli
 
         private static void Server_OnServicePacketSent(Core.Server.Services.IService service, Core.Server.Services.Peer sender, Core.Server.Messages.Packet packet)
         {
-            packet.ForEach(p => Log.Debug($"[{service.Name}] ({sender.Address}:{sender.Port}) SENT: " + p));
+            packet.ForEach(p => Log.Verbose($"[{service.Name}] ({sender.Address}:{sender.Port}) SENT: " + p));
         }
 
         private static void Server_OnServicePacketReceived(Core.Server.Services.IService service, Core.Server.Services.Peer sender, Core.Server.Messages.Packet packet)
         {
-            packet.ForEach(p => Log.Debug($"[{service.Name}] ({sender.Address}:{sender.Port}) RECV: " + p));
+            packet.ForEach(p => Log.Verbose($"[{service.Name}] ({sender.Address}:{sender.Port}) RECV: " + p));
         }
     }
 }
