@@ -8,26 +8,30 @@ using EchoRelay.Core.Utils;
 using EchoRelay.Nakama;
 using Jitbit.Utils;
 using Nakama;
+using Nakama.TinyJson;
 using Newtonsoft.Json;
+using Serilog;
 using System.Collections.Specialized;
 using System.Net;
-using System.Security.Cryptography;
+using System.Text.RegularExpressions;
 using System.Web;
+using ISession = Nakama.ISession;
 
-namespace EchoRelay.Core.Server.Services
+namespace EchoRelay.Core.Server.Services.Login
 {
     /// <summary>
     /// The login service is used to sign in, obtain a session, obtain logged in/other user profiles, update logged in profile, etc.
     /// </summary>
-    public class NLoginService : NService, ILoginService
+    public partial class NLoginService : NService, ILoginService
     {
-        private readonly Client _nkClient;
+
         #region Fields
         /// <summary>
         /// A cache of user sessions, with expiry upon peer disconnect.
         /// </summary>
         private FastCache<Guid, XPlatformId> _userSessions;
         private readonly EchoNakama Nk;
+
         #endregion
 
         #region Constructor
@@ -37,7 +41,8 @@ namespace EchoRelay.Core.Server.Services
         /// <param name="server">The server which this service is bound to.</param>
         public NLoginService(Server server, EchoNakama nk) : base(server, "LOGIN", nk)
         {
-            this.Nk = nk;
+            Nk = nk;
+
             _userSessions = new FastCache<Guid, XPlatformId>();
             OnPeerDisconnected += LoginService_OnPeerDisconnected;
             Server.OnServerStopped += Server_OnServerStopped;
@@ -159,15 +164,14 @@ namespace EchoRelay.Core.Server.Services
                 {
                     dynamic? logJson = JsonConvert.DeserializeObject(log);
 
-
                     if (logJson == null) continue;
                     if (logJson["message"] != "CUSTOMIZATION_METRICS_PAYLOAD") continue;
                     if (logJson["[event_type]"] != "item_equipped") continue;
                     if (logJson["[item_name]"] == null) continue;
                     string itemName = logJson["[item_name]"].ToString();
 
-                    var regex1 = new System.Text.RegularExpressions.Regex(@"^(.*?)_.*$");
-                    var regex2 = new System.Text.RegularExpressions.Regex(@"^rwd_(.*?)_.*$");
+                    var regex1 = new Regex(@"^(.*?)_.*$");
+                    var regex2 = new Regex(@"^rwd_(.*?)_.*$");
                     var match1 = regex1.Match(itemName);
                     var match2 = regex2.Match(itemName);
 
@@ -246,20 +250,19 @@ namespace EchoRelay.Core.Server.Services
         class LinkCode
         {
             [JsonProperty("code")]
-            public string Code = null;
+            public string? Code = null;
 
         }
-        private async Task<LinkCode?> GetLinkCodeByUserId(XPlatformId userId)
+        private async Task<LinkCode?> GetLinkCodeForXplatformId(XPlatformId userId)
         {
-            LinkCode linkCode = null;
             try
             {
                 _ = await Nk.RefreshSessionAsync();
-                
-                IApiRpc data = await Nk.Client.RpcAsync(Nk.Session, "echorelay/getDeviceLinkCode", payload: $"{{\"id\":\"{userId}\"}}");
+
+                IApiRpc data = await Nk.Client.RpcAsync(Nk.Session, "echorelay/getDeviceLinkCode", payload: $"{{\"xplatformid\":\"{userId}\"}}");
                 if (data.Payload != null)
                 {
-                    linkCode = JsonConvert.DeserializeObject<LinkCode>(data.Payload);
+                    return JsonConvert.DeserializeObject<LinkCode>(data.Payload);
                 }
             }
             catch (ApiResponseException ex)
@@ -270,143 +273,108 @@ namespace EchoRelay.Core.Server.Services
                         throw new Exception("Account is banned");
                 }
             }
-            return linkCode;
+            return null;
+        }
+
+        class LoginServerResponse
+        {
+            [JsonProperty("xplatform_id")]
+            public XPlatformId? XPlatformId { get; set; }
+            [JsonProperty("session_guid")]
+            public Guid SessionGuid { get; set; }
+            [JsonProperty("session_token")]
+            public Session? SessionToken { get; set; }
+            [JsonProperty("login_settings")]
+            public LoginSettingsResource? LoginSettings { get; set; }
+            [JsonProperty("account_data")]
+            public AccountResource? AccountData { get; set; }
+        }
+
+
+        class LoginRequestPayload
+        {
+            [JsonProperty("account_info")]
+            public LoginRequest.LoginAccountInfo AccountInfo { get; set; }
+            [JsonProperty("session_guid")]
+            public Guid SessionGuid { get; set; }
+            [JsonProperty("xplatform_id")]
+            public XPlatformId XPlatformId { get; set; }
         }
         /// <summary>
         /// Processes a <see cref="LoginRequest"/>.
         /// </summary>
         /// <param name="sender">The sender of the request.</param>
         /// <param name="request">The request contents.</param>
-        private async Task ProcessLoginRequest(Peer sender, LoginRequest request)
+        public async Task ProcessLoginRequest(Peer sender, LoginRequest request)
         {
+
             // If we have existing session data for this peer's connection, invalidate it.
             // Note: The client may have multiple connections, represented as different peers.
             // This only invalidates the current connection prior to accepting a new login.
             InvalidatePeerUserSession(sender);
+            AccountResource? account;
+            ISession? userSession = null;
 
-            // Validate the user identifier
-            if (!request.UserId.Valid())
+            try
             {
-                await sender.Send(new LoginFailure(request.UserId, HttpStatusCode.BadRequest, $"Invalid User Identifier\n'{request.UserId}' is invalid."));
-                return;
-            }
-
-            // Validate the user identifier
-            // TODO: Revisit this, these are not the same values. Should AccountId be the one we actually index accounts by? Can Platform ID change with time..?
-            if (false && request.AccountInfo.AccountId != request.UserId.AccountId)
-            {
-                await sender.Send(new LoginFailure(request.UserId, HttpStatusCode.Unauthorized, "Authentication failed"));
-                return;
-            }
-
-            // Get the current timestamp
-            ulong currentTimestamp = (ulong)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-
-            // Try to obtain a user from the storage layer.
-            // If the account doesn't exist, it is created and 
-            AccountResource? account = Storage.Accounts.Get(request.UserId);
-
-            if (account == null)
-            {
-                // Get a link for the headset
-                var linkCode = await GetLinkCodeByUserId(request.UserId);
-                
-                // Tell the user they need to link their headset to an account.
-                await sender.Send(new LoginFailure(request.UserId, HttpStatusCode.Unauthorized, 
-                    $"Headset {request.UserId} is not linked to an account.\n \n \nVisit https://echovrce.com/link\n \n \n YOUR LINK CODE:\n\n\n>>>  {linkCode.Code}  <<<"));
-                return;
-                // Create a default username for this user.
-                string displayName = request.UserId.PlatformCode == PlatformCode.DMO ? "Anonymous [DEMO]" : $"User [{RandomNumberGenerator.GetInt32(int.MaxValue).ToString("X")}]";
-
-                // Create an account for this user id. We use the platform identifier string as the display name.
-                account = new AccountResource(request.UserId, displayName, true, true, false);
-                account.Profile.Server.CreateTime = currentTimestamp;
-            }
-            else
-            {
-                // Real authentication can't be performed here against Oculus API. We are given an Oculus access token and nonce from client.
-                // Next, our server should be reaching out to Oculus servers with the access token and nonce to perform validation, however, this
-                // requires an app secret that only the real server would have, and which we wouldn't.
-                // Reference: https://developer.oculus.com/documentation/unity/ps-ownership/
-
-                // Note: It would be an anti-goal of this project to integrate with Oculus services anyways, so this is just a note for research.
-                // Set defaults for missing components
-                account.EnsureValidAccount(request.UserId);
-            }
-            
-
-            // Obtain our login service query parameters, so we can check for account display name overrides, authentication info, etc.
-            NameValueCollection queryStrings = HttpUtility.ParseQueryString(sender.RequestUri.Query);
-            string? displayNameOverride = queryStrings.Get("displayname");
-            string? authPassword = queryStrings.Get("auth") ?? queryStrings.Get("password");
-
-            // Authenticate to the account. If this is the first time an authentication lock/password
-            // was provided, it will be set for future authentication.
-            if (!account.Authenticate(authPassword))
-            {
-                await sender.Send(new LoginFailure(request.UserId, HttpStatusCode.Unauthorized, $"Invalid Login Credentials\nIncorrect credentials provided.\n(account id: {account.AccountIdentifier})"));
-                return;
-            }
-
-            // Check if the user is banned
-            if (account.Banned)
-            {
-                string banMessage = $"Account Temporarily Suspended\nUnavailable until {account.BannedUntil!.Value:MM/dd/yyyy @ hh:mm:ss tt} (UTC)";
-
-                if (account.BannedUntil == DateTime.MaxValue)
+                var payload = JsonConvert.SerializeObject(new LoginRequestPayload()
                 {
-                    banMessage = "Account Permanently Banned";
-                }
+                    AccountInfo = request.AccountInfo,
+                    SessionGuid = request.Session,
+                    XPlatformId = request.UserId
+                });
+                Log.Debug("Sending request: {payload}", payload.ToJson());
+                var response = await Nk.Client.RpcAsync(Nk.Session, "relay/loginrequest", payload);
+                Log.Debug($"Logged in successfully:", response);
+                var loginResponse = JsonConvert.DeserializeObject<LoginServerResponse>(payload);
+                account = Storage.Accounts.Get(request.UserId);
+                userSession = loginResponse.SessionToken;
 
-                await sender.Send(new LoginFailure(request.UserId, HttpStatusCode.Forbidden, banMessage));
-                return;
-            }
-            else
-            {
-                account.BannedUntil = null;
-            }
-
-            // If we have a display name override, update the display name.
-            if (displayNameOverride != null)
-            {
-                displayNameOverride = displayNameOverride.Trim();
-                if (displayNameOverride.Length > 0)
+                if (!loginResponse.XPlatformId.Equals(request.UserId))
                 {
-                    // Limit the maximum display name length.
-                    if (displayNameOverride.Length > 20)
-                        displayNameOverride = displayNameOverride.Substring(0, 20);
-
-                    // If this is a demo account, wrap the name for distinction
-                    if (account.AccountIdentifier.PlatformCode == PlatformCode.DMO)
-                        displayNameOverride = $"{displayNameOverride} [DEMO]";
-
-                    account.Profile.SetDisplayName(displayNameOverride);
+                    Log.Error($"Mismatched userId's: {loginResponse.XPlatformId} {request.UserId}");
+                    await sender.Send(new LoggedInUserProfileFailure(request.UserId, HttpStatusCode.BadRequest, "Invalid account identifier"));
+                    return;
                 }
             }
-
-            // Update the server profile's logintime and updatetime.
-            account.Profile.Server.LobbyVersion = request.AccountInfo.LobbyVersion;
-            account.Profile.Server.LoginTime = currentTimestamp;
-            account.Profile.Server.UpdateTime = currentTimestamp;
-            account.Profile.Server.ModifyTime = currentTimestamp;
-
-            // Store the account data
-            Storage.Accounts.Set(account);
-
-            // Create a session token that will practically not expire.
-            // Set it for the peer. If they disconnect, an actual timeout will be set on the session before it expires.
-            Guid session = SecureGuidGenerator.Generate();
-            _userSessions.AddOrUpdate(session, request.UserId, TimeSpan.FromDays(3000));
-            sender.SetSessionData(session);
+            catch (Exception ex)
+            {
+                switch (ex)
+                {
+                    case ApiResponseException apiException:
+                        switch (apiException.StatusCode)
+                        {
+                            case 401: // Account does not have a valid discord link
+                            case 403: // Banned Account
+                            case 404: // Account Not Found
+                                await sender.Send(new LoginFailure(request.UserId, (HttpStatusCode)apiException.StatusCode, ex.Message));
+                                return;
+                            default:
+                                await sender.Send(new LoginFailure(request.UserId, HttpStatusCode.Unauthorized,
+                                                                   $"Unknown server error: {ex.Message}"));
+                                return;
+                        }
+                    default:
+                        await sender.Send(new LoginFailure(request.UserId, HttpStatusCode.Unauthorized,
+                                                                                              $"Error: {ex.Message}"));
+                        return;
+                }
+            }
+            Guid sessionGuid = SecureGuidGenerator.Generate();
+            _userSessions.AddOrUpdate(sessionGuid, request.UserId, TimeSpan.FromDays(3000));
+            sender.SetSessionData(sessionGuid);
 
             // Obtain the login settings
             LoginSettingsResource? loginSettings = Storage.LoginSettings.Get();
+
+            _userSessions.AddOrUpdate(sessionGuid, request.UserId, TimeSpan.FromDays(3000));
+            sender.SetSessionData(sessionGuid);
 
             // Set the authenticated user identifier
             sender.UpdateUserAuthentication(request.UserId, account.Profile.Server.DisplayName);
 
             // Send login success response.
-            await sender.Send(new LoginSuccess(request.UserId, session));
+            await sender.Send(new LoginSuccess(request.UserId, sessionGuid));
             await sender.Send(new TcpConnectionUnrequireEvent());
 
             // Send login settings if we were able to obtain them.
@@ -415,7 +383,6 @@ namespace EchoRelay.Core.Server.Services
                 await sender.Send(new LoginSettings(loginSettings));
             }
         }
-
         /// <summary>
         /// Processes a <see cref="LoggedInUserProfileRequest"/>.
         /// </summary>
