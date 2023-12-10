@@ -112,7 +112,7 @@ namespace EchoRelay.Core.Server
         /// <param name="serverConfig">Indicates whether sensitive gameserver-only fields should be included in the config.</param>
         /// <param name="publisherLock">The publisher/environment lock to generate with.</param>
         /// <returns>Returns the generated <see cref="ServiceConfig"/>.</returns>
-        public ServiceConfig GenerateServiceConfig(string address, bool serverConfig = true, string publisherLock = "rad15_live", string? serverPlugin = null)
+        public ServiceConfig GenerateServiceConfig(string address, bool serverConfig = true, string publisherLock = "rad15_live", string? serverPlugin = null, bool hideKey = false)
         {
             // Obtain our base host
             string webSocketHost = $"ws://{address}:{Port}";
@@ -120,7 +120,7 @@ namespace EchoRelay.Core.Server
 
             // Construct our ServerDB path
             string serverDBHost = webSocketHost + ServerDBServicePath;
-            if (ServerDBApiKey != null)
+            if (ServerDBApiKey != null && !hideKey)
             {
                 serverDBHost += $"?api_key={HttpUtility.UrlEncode(ServerDBApiKey)}";
             }
