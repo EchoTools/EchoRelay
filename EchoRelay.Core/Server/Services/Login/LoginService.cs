@@ -231,6 +231,7 @@ namespace EchoRelay.Core.Server.Services.Login
                 }
                 catch (Exception e)
                 {
+                    continue;
                 }
             }
         }
@@ -296,7 +297,7 @@ namespace EchoRelay.Core.Server.Services.Login
             // was provided, it will be set for future authentication.
             if (!account.Authenticate(authPassword))
             {
-                await sender.Send(new LoginFailure(request.UserId, HttpStatusCode.Unauthorized, $"Invalid Login Credentials\nIncorrect credentials."));
+                await sender.Send(new LoginFailure(request.UserId, HttpStatusCode.Unauthorized, $"Invalid Login Credentials\nIncorrect credentials provided.\n(account id: {account.AccountIdentifier})"));
                 return;
             }
 
