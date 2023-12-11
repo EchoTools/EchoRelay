@@ -263,7 +263,7 @@ namespace EchoRelay.Core.Server.Services.Login
 
             // Validate the user identifier
             // TODO: Revisit this, these are not the same values. Should AccountId be the one we actually index accounts by? Can Platform ID change with time..?
-            if (false && request.AccountInfo.AccountId != request.UserId.AccountId)
+            if (false && request.LoginData.AccountId != request.UserId.AccountId)
             {
                 await sender.Send(new LoginFailure(request.UserId, HttpStatusCode.Unauthorized, "Authentication failed"));
                 return;
@@ -344,7 +344,7 @@ namespace EchoRelay.Core.Server.Services.Login
             }
 
             // Update the server profile's logintime and updatetime.
-            account.Profile.Server.LobbyVersion = request.AccountInfo.LobbyVersion;
+            account.Profile.Server.LobbyVersion = request.LoginData.LobbyVersion;
             account.Profile.Server.LoginTime = currentTimestamp;
             account.Profile.Server.UpdateTime = currentTimestamp;
             account.Profile.Server.ModifyTime = currentTimestamp;

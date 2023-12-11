@@ -27,7 +27,7 @@ namespace EchoRelay.Core.Server.Messages.Login
         /// <summary>
         /// The client account information supplied for the sign-in request.
         /// </summary>
-        public LoginAccountInfo AccountInfo;
+        public LoginAccountInfo LoginData;
         #endregion
 
         #region Constructor
@@ -36,7 +36,7 @@ namespace EchoRelay.Core.Server.Messages.Login
         /// </summary>
         public LoginRequest()
         {
-            AccountInfo = new LoginAccountInfo();
+            LoginData = new LoginAccountInfo();
             Session = new Guid();
             UserId = new XPlatformId();
         }
@@ -51,7 +51,7 @@ namespace EchoRelay.Core.Server.Messages.Login
         {
             Session = session;
             UserId = userId;
-            AccountInfo = accountData;
+            LoginData = accountData;
         }
 
         #endregion
@@ -65,12 +65,12 @@ namespace EchoRelay.Core.Server.Messages.Login
         {
             io.Stream(ref Session);
             UserId.Stream(io);
-            io.StreamJSON(ref AccountInfo, true, JSONCompressionMode.None);
+            io.StreamJSON(ref LoginData, true, JSONCompressionMode.None);
         }
 
         public override string ToString()
         {
-            return $"{GetType().Name}(session={Session}, user_id={UserId}, account_data={JObject.FromObject(AccountInfo).ToString(Newtonsoft.Json.Formatting.None)})";
+            return $"{GetType().Name}(session={Session}, user_id={UserId}, account_data={JObject.FromObject(LoginData).ToString(Newtonsoft.Json.Formatting.None)})";
         }
         #endregion
 

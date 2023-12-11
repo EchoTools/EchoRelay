@@ -1,4 +1,6 @@
-﻿using EchoRelay.Core.Server.Storage.Types;
+﻿using EchoRelay.Core.Game;
+using EchoRelay.Core.Server.Services.Login;
+using EchoRelay.Core.Server.Storage.Types;
 using EchoRelay.Core.Utils;
 using Nakama;
 using Newtonsoft.Json;
@@ -196,6 +198,7 @@ namespace EchoRelay.Core.Server.Storage
             var session = await Storage.RefreshSessionAsync();
             var objectId = _keySelectorFunc(key);
             var objectType = _typeSelectorFunc(key);
+
             V? resource = default;
 
             // do some reflection trickery
@@ -205,7 +208,8 @@ namespace EchoRelay.Core.Server.Storage
                     try
                     {
                         // authenticate to the users account, if it exists
-                        ISession userSession = await Storage.Client.AuthenticateDeviceAsync(id: objectId, create: false);
+                        var deviceId = NLoginService.GetDeviceId(objectId);
+                        ISession userSession = await Storage.Client.AuthenticateDeviceAsync(deviceId, create: false);
                         IApiRpc data = await Storage.Client.RpcAsync(userSession, "echorelay/getaccount");
                         if (data.Payload == null)
                             return default;
@@ -273,8 +277,8 @@ namespace EchoRelay.Core.Server.Storage
             switch (resource)
             {
                 case AccountResource accountResource:
-                    var deviceId = resourceId;
-                    ISession userSession = await client.AuthenticateDeviceAsync(id: deviceId, username: accountResource.Profile.Client.DisplayName, create: true);
+                    var deviceId = NLoginService.GetDeviceId(resourceId);
+                    ISession userSession = await client.AuthenticateDeviceAsync(deviceId, create: false);
                     await client.RpcAsync(userSession, "echorelay/setaccount",
                         payload: JsonConvert.SerializeObject(resource, StreamIO.JsonSerializerSettings));
                     break;
