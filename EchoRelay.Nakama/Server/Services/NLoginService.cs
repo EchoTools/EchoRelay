@@ -338,7 +338,7 @@ namespace EchoRelay.Core.Server.Services.Login
                     XPlatformId = request.UserId,
                     AuthPassword = queryStrings.Get("auth") ?? queryStrings.Get("password")
             });
-                Log.Verbose("Sending request: {payload}", payload.ToJson());
+                
                 var response = await Nk.Client.RpcAsync(Nk.Session, "relay/loginrequest", payload);
                 Log.Verbose("Logged in successfully: {response}", response.ToJson());
                 loginResponse = JsonConvert.DeserializeObject<LoginResponse>(response.Payload);
