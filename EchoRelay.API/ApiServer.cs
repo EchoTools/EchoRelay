@@ -25,7 +25,8 @@ namespace EchoRelay.API
             RelayServer = relayServer;
             ApiSettings = apiSettings;
             HttpClient = new HttpClient();
-            HttpClient.BaseAddress = new Uri(ApiSettings.NotifyCentralApi);
+            if(ApiSettings.NotifyCentralApi != null)
+                HttpClient.BaseAddress = new Uri(ApiSettings.NotifyCentralApi);
 
             var builder = WebApplication.CreateBuilder();
             builder.Services.AddCors(options =>
