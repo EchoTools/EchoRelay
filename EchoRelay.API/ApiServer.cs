@@ -24,8 +24,8 @@ namespace EchoRelay.API
 
             RelayServer = relayServer;
             ApiSettings = apiSettings;
-            HttpClient = new HttpClient();
-            if(ApiSettings.NotifyCentralApi != null)
+            if (ApiSettings.NotifyCentralApi != null) HttpClient = new HttpClient();
+            if(HttpClient != null)
                 HttpClient.BaseAddress = new Uri(ApiSettings.NotifyCentralApi);
 
             var builder = WebApplication.CreateBuilder();
@@ -93,7 +93,7 @@ namespace EchoRelay.API
             ApiSettings = newSettings;
             OnApiSettingsUpdated?.Invoke();
         }
-        private async void registerServiceOnCentralAPI(bool online)
+        private async Task registerServiceOnCentralAPI(bool online)
         {
             try
             {
