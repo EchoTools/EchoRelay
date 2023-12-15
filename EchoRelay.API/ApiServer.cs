@@ -8,7 +8,7 @@ namespace EchoRelay.API
 {
     public class ApiServer
     {
-        public static ApiServer? Instance;
+        public static ApiServer? Instance { get; private set; }
 
         public Server RelayServer { get; private set; }
 
