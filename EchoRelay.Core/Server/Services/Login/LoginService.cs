@@ -182,7 +182,10 @@ namespace EchoRelay.Core.Server.Services.Login
                             account.Profile.Server.Loadout.Instances.Unified.Slots.DecalBody = itemName;
                             break;
                         case "tint":
-                            account.Profile.Server.Loadout.Instances.Unified.Slots.Tint = itemName;
+                            if (itemName != "tint_chassis_default")
+                            {
+                                account.Profile.Server.Loadout.Instances.Unified.Slots.Tint = itemName;
+                            }
                             account.Profile.Server.Loadout.Instances.Unified.Slots.TintBody = itemName;
                             /*account.Profile.Server.Loadout.Instances.Unified.Slots.TintAlignmentA = itemName;
                             account.Profile.Server.Loadout.Instances.Unified.Slots.TintAlignmentB = itemName;*/
