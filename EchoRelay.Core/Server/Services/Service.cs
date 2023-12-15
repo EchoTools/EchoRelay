@@ -207,7 +207,7 @@ namespace EchoRelay.Core.Server.Services
                 Log.Error($"An exception occurred while handling a connection: {e.Message}");
 
                 // Close the connection gracefully.
-                await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
+                //await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
             }
             finally
             {
