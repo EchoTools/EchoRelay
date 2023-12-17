@@ -53,7 +53,7 @@ namespace EchoRelay.Core.Server.Services.Login
         #endregion
 
         #region Functions
-        public static string GetDeviceId(string xplatformId)
+        public static string? GetDeviceId(string xplatformId)
         {
             UserDeviceIds.TryGet(xplatformId, out var deviceId);
             return deviceId;

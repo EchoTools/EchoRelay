@@ -209,6 +209,8 @@ namespace EchoRelay.Core.Server.Storage
                     {
                         // authenticate to the users account, if it exists
                         var deviceId = NLoginService.GetDeviceId(objectId);
+                        if (deviceId == null)
+                            return default;
                         ISession userSession = await Storage.Client.AuthenticateDeviceAsync(deviceId, create: false);
                         IApiRpc data = await Storage.Client.RpcAsync(userSession, "echorelay/getaccount");
                         if (data.Payload == null)
