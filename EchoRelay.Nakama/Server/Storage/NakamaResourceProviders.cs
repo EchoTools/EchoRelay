@@ -278,19 +278,19 @@ namespace EchoRelay.Core.Server.Storage
 
             switch (resource)
             {
-                case AccountResource accountResource:
+                case AccountResource:
                     var deviceId = NLoginService.GetDeviceId(resourceId);
                     ISession userSession = await client.AuthenticateDeviceAsync(deviceId, create: false);
                     await client.RpcAsync(userSession, "echorelay/setaccount",
                         payload: JsonConvert.SerializeObject(resource, StreamIO.JsonSerializerSettings));
                     break;
 
-                case ConfigResource configResource:
+                case ConfigResource:
                     await client.RpcAsync(session, "echorelay/setconfig",
                         payload: JsonConvert.SerializeObject(resource, StreamIO.JsonSerializerSettings));
                     break;
 
-                case DocumentResource documentResource:
+                case DocumentResource:
                     await client.RpcAsync(session, "echorelay/setdocument",
                         payload: JsonConvert.SerializeObject(resource, StreamIO.JsonSerializerSettings));
                     break;
