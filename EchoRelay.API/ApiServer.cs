@@ -43,13 +43,6 @@ namespace EchoRelay.API
 
             var lifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
 
-
-            // Update "current" desired registration state
-            lifetime.ApplicationStarted.Register(async () => await CentralApiStatusUpdate(ApiSettings.NotifyCentralApi != null));
-
-            // Update registration state when the app is shutting down
-            lifetime.ApplicationStopping.Register(async () => await CentralApiStatusUpdate(false));
-
             // Reduce logging noise
             app.UseSerilogRequestLogging();
 
@@ -72,6 +65,13 @@ namespace EchoRelay.API
             app.UseAuthorization();
             app.MapControllers();
 
+            if (ApiSettings.CentralApiUrl != null)
+            {
+                // Update registration state on startup/shutdown
+                lifetime.ApplicationStarted.Register(async () => await SendCentralApiRegistrationUpdate(true));
+                lifetime.ApplicationStopping.Register(async () => await SendCentralApiRegistrationUpdate(false));
+            }
+
             app.RunAsync("http://0.0.0.0:8080");
         }
 
@@ -81,15 +81,16 @@ namespace EchoRelay.API
             OnApiSettingsUpdated?.Invoke();
         }
 
-        private async Task CentralApiStatusUpdate(bool isOnline)
+        public async Task SendCentralApiRegistrationUpdate(bool isOnline)
         {
-            if (ApiSettings.NotifyCentralApi == null)
+            if (ApiSettings.CentralApiUrl == null)
+            {
                 return;
-
+            }
             try
             {
                 using (HttpClient httpClient = new() { 
-                    BaseAddress = new Uri(ApiSettings.NotifyCentralApi)
+                    BaseAddress = new Uri(ApiSettings.CentralApiUrl)
                 })
                 {
                     httpClient.DefaultRequestHeaders.Add("X-Api-Key", ApiSettings.CentralApiKey);
@@ -100,7 +101,7 @@ namespace EchoRelay.API
                     var response = await httpClient.PostAsync($"api/setServerStatus/{RelayServer.PublicIPAddress}", content);
                     response.EnsureSuccessStatusCode();
 
-                    Log.Information("Registered on Central API as '{0}'", RelayServer.PublicIPAddress);
+                    Log.Information("Registered on Central API as '{0}:'", RelayServer.PublicIPAddress);
                 }
             }
             catch (Exception ex)
