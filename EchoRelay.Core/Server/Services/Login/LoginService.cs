@@ -188,7 +188,12 @@ namespace EchoRelay.Core.Server.Services.Login
                             account.Profile.Server.Loadout.Instances.Unified.Slots.DecalBody = itemName;
                             break;
                         case "tint":
-                            account.Profile.Server.Loadout.Instances.Unified.Slots.Tint = itemName;
+                            // Equipping tint_chassis_default to heraldry tint causes every heraldry equip to be pitch black.
+                            // Guessing wherever this pulls the tint from doesn't exist on heraldry equippables.
+                            if (itemName != "tint_chassis_default")
+                            {
+                                account.Profile.Server.Loadout.Instances.Unified.Slots.Tint = itemName;
+                            }
                             account.Profile.Server.Loadout.Instances.Unified.Slots.TintBody = itemName;
                             /*account.Profile.Server.Loadout.Instances.Unified.Slots.TintAlignmentA = itemName;
                             account.Profile.Server.Loadout.Instances.Unified.Slots.TintAlignmentB = itemName;*/

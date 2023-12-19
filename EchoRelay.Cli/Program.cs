@@ -88,13 +88,11 @@ namespace EchoRelay.Cli
             [Option("enable-api", Required = false, Default = false, HelpText = "enable the API server")]
             public bool EnableApi { get; set; } = true;
 
-            [Option("central-api-key", Required = false, Default = null, HelpText = "require central api authenticate with API Key (via '?centralapikey=' query parameters).")]
+            [Option("central-api-key", Required = false, Default = null, HelpText = "authenticate to central api using key")]
             public string? CentralApiKey { get; set; }
             
-            [Option("notify-central-api", Required = false, Default = null,
-                HelpText = "notify central api when your relay is online")]
-            public string? NotifyCentralApi { get; set; } = null;
-
+            [Option("notify-central-api", Required = false, HelpText = "notify central api when this relay is online at URL")]
+            public string? CentralApiUrl { get; set; } = null;
         }
 
         /// <summary>
@@ -326,7 +324,7 @@ namespace EchoRelay.Cli
         {
             if (Options.EnableApi)
             {
-                ApiServer = new ApiServer(server, new ApiSettings(apiKey: Options.ServerDBApiKey, notifyCentralApi: Options.NotifyCentralApi, centralApiKey:Options.CentralApiKey));
+                ApiServer = new ApiServer(server, new ApiSettings(apiKey: Options.ServerDBApiKey, centralApiUrl: Options.CentralApiUrl, centralApiKey:Options.CentralApiKey));
             }
             // Print our server started message
             Log.Information("[SERVER] Server started");

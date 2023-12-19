@@ -3,12 +3,12 @@
     public class ApiSettings
     {
         public string? ApiKey;
-        public string? NotifyCentralApi;
+        public string? CentralApiUrl;
         public string? CentralApiKey;
-        public ApiSettings(string? apiKey, string? notifyCentralApi, string? centralApiKey) {
+        public ApiSettings(string? apiKey, string? centralApiUrl, string? centralApiKey) {
             ApiKey = apiKey;
             CentralApiKey = centralApiKey;
-            NotifyCentralApi = notifyCentralApi;
+            CentralApiUrl = centralApiUrl;
         }
     }
 }

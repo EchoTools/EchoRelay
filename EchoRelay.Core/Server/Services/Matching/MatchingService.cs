@@ -298,6 +298,8 @@ namespace EchoRelay.Core.Server.Services.Matching
                     unfilledServerOnly: true
                 );
 
+                // Case when pressing "New Lobby" button in the menu.
+                gameServers = gameServers.Where(x => x.SessionId == null || x.SessionId != matchingSession.CurrentSession);
 
                 // Determine if the user is trying to join a private match.
                 bool isPrivateMatch = false;
