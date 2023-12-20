@@ -9,6 +9,11 @@ namespace EchoVR
 	CHAR* g_GameBaseAddress = (CHAR*)GetModuleHandle(NULL);
 
 	/// <summary>
+	/// Pointer to the games timestep used for engine calculations.
+	/// </summary>
+	UINT32* timeStep = nullptr;
+
+	/// <summary>
 	/// Obtains a pool item/block/memory page from a given pool for the given index.
 	/// </summary>
 	typedef BYTE* PoolFindItemFunc(PVOID pool, UINT64 index);
@@ -131,6 +136,15 @@ namespace EchoVR
 		BOOL reportFailure
 	);
 	JsonValueAsStringFunc* JsonValueAsString = (JsonValueAsStringFunc*)(g_GameBaseAddress + 0x5FE290);
+
+	/// <summary>
+	/// Checks if current gametype is a social lobby.
+	/// </summary>
+	typedef bool SocialHKFunc(
+		PVOID* pGame,
+		INT64 gameType
+	);
+	SocialHKFunc* SocialHK = (SocialHKFunc*)(EchoVR::g_GameBaseAddress + 0x1B63B0);
 
 	/// <summary>
 	/// Parses a URI string into a URI container structure.

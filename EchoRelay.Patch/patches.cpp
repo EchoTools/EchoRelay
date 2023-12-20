@@ -9,6 +9,11 @@
 BOOL initialized = FALSE;
 
 /// <summary>
+/// Indicates whether the game is currently in a social lobby.
+/// </summary>
+BOOL IsSocialLobby = FALSE;
+
+/// <summary>
 /// A CLI argument flag indicating whether the game is booting as a dedicated server.
 /// </summary>
 BOOL isServer = FALSE;
@@ -153,6 +158,19 @@ VOID Log(EchoVR::LogLevel level, const CHAR* format, ...) {
     else
         EchoVR::WriteLog(level, 0, format, args);
     va_end(args);
+}
+
+/// <summary>
+/// Sets the fixed time step for the game engine.
+/// </summary>
+/// <param name="TickRate">The tick rate to set the fixed time step to.</param>
+/// <returns>None</returns>
+VOID SetTickRate(UINT64 TickRate) {
+    // Patch the fixed time step based on tick count.
+    // Fixed time step is in microseconds, tick rate is per second.
+    if (EchoVR::timeStep != nullptr) {
+        *EchoVR::timeStep = 1000000 / TickRate;
+    }
 }
 
 /// <summary>
@@ -331,13 +349,26 @@ VOID PatchDeadlockMonitor()
     ProcessMemcpy(EchoVR::g_GameBaseAddress + 0x1D3881, pbPatch, sizeof(pbPatch));
 }
 
+
+
+/// <summary>
+/// A detour hook for the game's method it uses to determine if the game is in a social lobby.
+/// </summary>
+
+BOOL IsSocialFN(PVOID* pGame, INT64 gameType) {
+    IsSocialLobby = EchoVR::SocialHK(pGame, gameType);
+    return IsSocialLobby;
+}
+
+
+
 /// <summary>
 /// A detour hook for the game's method it uses to transition from one net game state to another.
 /// </summary>
 /// <param name="game">A pointer to the game instance.</param>
 /// <param name="state">The state to transition to.</param>
 /// <returns>None</returns>
-VOID NetGameSwitchStateHook(PVOID pGame, EchoVR::NetGameState state)
+VOID NetGameSwitchStateHook(PVOID *pGame, EchoVR::NetGameState state)
 {
     // Hook the net game switch state function, so we can redirect "load level failed" to a ready state again.
     // This way if a client requests a non-existent level, the game server library isn't unloaded due to a state
@@ -352,10 +383,32 @@ VOID NetGameSwitchStateHook(PVOID pGame, EchoVR::NetGameState state)
         EchoVR::NetGameScheduleReturnToLobby(pGame);
         return;
     }
+    if (isHeadless && headlessTimeStep != 0)
+    {
+        if (state == EchoVR::NetGameState::InGame) {
+            if (IsSocialLobby) {
+                Log(EchoVR::LogLevel::Debug, "[ECHORELAY.PATCH] In Social Lobby, Setting TPS to %llu", headlessTimeStep / 4);
+                SetTickRate(headlessTimeStep / 4);
+            }
+            else {
+                Log(EchoVR::LogLevel::Debug, "[ECHORELAY.PATCH] In Game, Setting TPS to %llu", headlessTimeStep);
+                SetTickRate(headlessTimeStep);
+            }
+        }
+        else {
+            Log(EchoVR::LogLevel::Debug, "[ECHORELAY.PATCH] In Menu, Setting TPS to 5");
+            SetTickRate(5);
+        }
+    }
+
 
     // Call the original function
     EchoVR::NetGameSwitchState(pGame, state);
 }
+
+
+
+
 
 /// <summary>
 /// A detour hook for the game's method it uses to build CLI argument definitions. 
@@ -458,10 +511,10 @@ UINT64 LoadLocalConfigHook(PVOID pGame)
     // This is placed here, as by this time, the structure to dereference will be initialized.
     if (isHeadless && headlessTimeStep != 0)
     {
-        // Patch the fixed time step based on tick count.
-        // Fixed time step is in microseconds, tick rate is per second.
-        UINT32* timeStep = (UINT32*)(*(CHAR**)(EchoVR::g_GameBaseAddress + 0x020A00E8) + 0x90);
-        *timeStep = 1000000 / headlessTimeStep;
+
+        // Set the timestep pointer to the address of the timestep value.
+        EchoVR::timeStep = (UINT32*)(*(CHAR**)(EchoVR::g_GameBaseAddress + 0x020A00E8) + 0x90);
+        SetTickRate(headlessTimeStep);
 
         // Patches the game to fix the delta time calculation for when using fixedtimestep.
         // Change condtion for if deltatime is higher than timestep tell engine time is deltatime.
@@ -593,6 +646,7 @@ VOID Initialize()
     PatchDetour(&(PVOID&)EchoVR::HttpConnect, HttpConnectHook);
     PatchDetour(&(PVOID&)EchoVR::GetProcAddress, GetProcAddressHook);
     PatchDetour(&(PVOID&)EchoVR::SetWindowTextA_, SetWindowTextAHook);
+    PatchDetour(&(PVOID&)EchoVR::SocialHK, IsSocialFN);
 
     // Run some startup patches
     PatchNoOvrRequiresSpectatorStream();
