@@ -140,11 +140,11 @@ namespace EchoVR
 	/// <summary>
 	/// Checks if current gametype is a social lobby.
 	/// </summary>
-	typedef bool SocialHKFunc(
+	typedef bool SocialFunc(
 		PVOID* pGame,
 		INT64 gameType
 	);
-	SocialHKFunc* SocialHK = (SocialHKFunc*)(EchoVR::g_GameBaseAddress + 0x1B63B0);
+	SocialFunc* Social = (SocialFunc*)(EchoVR::g_GameBaseAddress + 0x1B63B0);
 
 	/// <summary>
 	/// Parses a URI string into a URI container structure.
