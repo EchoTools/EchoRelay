@@ -7,13 +7,17 @@ namespace EchoRelay.Nakama
         private readonly Uri _nakamaUri;
         private readonly string _serverKey;
 
-        public Client? Client { get; private set; }
+        public Client Client { get; private set; }
         public ISession? Session { get; private set; }
         public string? RelayId { get; private set; }
 
+        private static readonly RetryConfiguration retryConfiguration = new(baseDelayMs: 200, maxRetries: 1);
         public async Task<ISession> RefreshSessionAsync()
         {
+
             Client ??= Connect();
+
+            Client.GlobalRetryConfiguration = retryConfiguration;
             if (Session is null || Session.IsExpired)
                 Session = await Client.AuthenticateDeviceAsync(RelayId, username: RelayId, create: true);
             else

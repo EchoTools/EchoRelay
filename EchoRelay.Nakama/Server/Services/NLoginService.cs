@@ -258,61 +258,56 @@ namespace EchoRelay.Core.Server.Services.Login
         class LinkCode
         {
             [JsonProperty("code")]
-            public string? Code = null;
+            public string Code = "";
 
-        }
-        private async Task<LinkCode?> GetLinkCodeForXplatformId(XPlatformId userId)
-        {
-            try
-            {
-                _ = await Nk.RefreshSessionAsync();
-
-                IApiRpc data = await Nk.Client.RpcAsync(Nk.Session, "echorelay/getDeviceLinkCode", payload: $"{{\"xplatformid\":\"{userId}\"}}");
-                if (data.Payload != null)
-                {
-                    return JsonConvert.DeserializeObject<LinkCode>(data.Payload);
-                }
-            }
-            catch (ApiResponseException ex)
-            {
-                switch (ex.StatusCode)
-                {
-                    case 403: // Banned Account
-                        throw new Exception("Account is banned");
-                }
-            }
-            return null;
-        }
-
-        class LoginResponse
-        {
-            [JsonProperty("xplatform_id")]
-            public XPlatformId? XPlatformId { get; set; }
-            [JsonProperty("device_id_str")]
-            public string? DeviceId { get; set; }
-            [JsonProperty("session_guid")]
-            public Guid SessionGuid { get; set; }
-            [JsonProperty("session_token")]
-            public string? SessionToken { get; set; }
-            [JsonProperty("login_settings")]
-            public LoginSettingsResource? LoginSettings { get; set; }
-            [JsonProperty("game_profiles")]
-            public AccountProfile? GameProfiles { get; set; }
         }
 
 
         class LoginRequestPayload
         {
-            [JsonProperty("login_data")]
+            [JsonProperty("metadata")]
             public LoginRequest.LoginAccountInfo LoginData { get; set; }
-            [JsonProperty("session_guid")]
-            public Guid SessionGuid { get; set; }
-            [JsonProperty("xplatform_id")]
-            public XPlatformId XPlatformId { get; set; }
-            [JsonProperty("auth_password")]
-            public string? AuthPassword { get; set; }
 
+            [JsonProperty("echo_session_guid")]
+            public Guid SessionGuid { get; set; }
+
+            [JsonProperty("echo_user_id")]
+            public XPlatformId XPlatformId { get; set; } = new XPlatformId();
+
+            [JsonProperty("user_password")]
+            public string ClientPassword { get; set; } = "";
+
+            [JsonProperty("display_name_override")]
+            public string ClientDisplayNameOverride { get; set; } = "";
+
+            [JsonProperty("hmd_serial_number_override")]
+            public string HmdSerialNumberOverride { get; set; } = "";
+
+            [JsonProperty("client_ip_address")]
+            public string ClientIpAddress { get; set; } = "";
         }
+
+        class LoginSuccessResponse
+        {
+            [JsonProperty("echo_user_id")]
+            public XPlatformId XPlatformId { get; set; } = new XPlatformId();
+
+            [JsonProperty("nk_device_auth_token")]
+            public string DeviceIdToken { get; set; } = "";
+
+            [JsonProperty("echo_session_guid")]
+            public Guid SessionGuid { get; set; } = Guid.Empty;
+
+            [JsonProperty("nk_session_token")]
+            public string NkSessionToken { get; set; } = "";
+
+            [JsonProperty("client_settings")]
+            public LoginSettingsResource LoginSettings { get; set; } = new LoginSettingsResource();
+
+            [JsonProperty("game_profiles")]
+            public AccountProfile GameProfiles { get; set; } = new AccountProfile();
+        }
+
         /// <summary>
         /// Processes a <see cref="LoginRequest"/>.
         /// </summary>
@@ -325,51 +320,81 @@ namespace EchoRelay.Core.Server.Services.Login
             // Note: The client may have multiple connections, represented as different peers.
             // This only invalidates the current connection prior to accepting a new login.
             InvalidatePeerUserSession(sender);
+
+
             AccountResource? account;
             ISession? userSession;
-            LoginResponse? loginResponse;
+            LoginSettingsResource loginSettings;
+            Guid sessionGuid;
+
+            string payload;
             try
             {
                 NameValueCollection queryStrings = HttpUtility.ParseQueryString(sender.RequestUri.Query);
-                var payload = JsonConvert.SerializeObject(new LoginRequestPayload()
+                payload = JsonConvert.SerializeObject(new LoginRequestPayload()
                 {
                     LoginData = request.LoginData,
                     SessionGuid = request.Session,
                     XPlatformId = request.UserId,
-                    AuthPassword = queryStrings.Get("auth") ?? queryStrings.Get("password")
-            });
-                
-                var response = await Nk.Client.RpcAsync(Nk.Session, "relay/loginrequest", payload);
-                Log.Verbose("Logged in successfully: {response}", response.ToJson());
-                loginResponse = JsonConvert.DeserializeObject<LoginResponse>(response.Payload);
+                    ClientPassword = queryStrings.Get("password") ?? "",
+                    ClientDisplayNameOverride = queryStrings.Get("displayname") ?? "",
+                    HmdSerialNumberOverride = queryStrings.Get("hmdserial") ?? "",
+                    ClientIpAddress = sender.Address.ToString()
+                });
 
-                account = new AccountResource();
-
-                loginResponse.GameProfiles ??= new AccountProfile();
-                account.Profile.Client = loginResponse.GameProfiles.Client ?? new AccountClientProfile();
-                account.Profile.Server = loginResponse.GameProfiles.Server ?? new AccountServerProfile();
-
-                //account = Storage.Accounts.Get(request.UserId);
-                userSession = Session.Restore(loginResponse.SessionToken);
-                UserDeviceIds.AddOrUpdate(request.UserId.ToString(), loginResponse.DeviceId, TimeSpan.FromDays(3000));
+                if (payload == null)
+                {
+                    throw new System.Exception("Failed to parse query string");
+                }
             }
             catch (Exception ex)
             {
-                switch (ex)
+                Log.Error(ex, "Failed to parse query string");
+                await sender.Send(new LoginFailure(request.UserId, HttpStatusCode.BadRequest, "Failed to parse `config.json` query string."));
+                return;
+            }
+
+            try
+            {
+                var response = await Nk.Client.RpcAsync(Nk.Session, "relay/loginrequest", payload);
+                Log.Verbose("Logged in successfully: {response}", response.ToJson());
+
+                LoginSuccessResponse? loginResponse = JsonConvert.DeserializeObject<LoginSuccessResponse>(response.Payload);
+                if (loginResponse == null)
                 {
-                    case ApiResponseException apiException:
-                        switch (apiException.StatusCode)
+                    Log.Error("Invalid login response from server: {0}", response.Payload);
+                    await sender.Send(new LoginFailure(request.UserId, HttpStatusCode.Unauthorized, "Invalid login response from server"));
+                    return;
+                }
+                userSession = Session.Restore(loginResponse.NkSessionToken);
+                UserDeviceIds.AddOrUpdate(request.UserId.ToString(), loginResponse.DeviceIdToken, TimeSpan.FromDays(3000));
+
+                sessionGuid = loginResponse.SessionGuid;
+                loginSettings = loginResponse.LoginSettings;
+                // TODO: account construction should be done on the nakama server
+                account = new AccountResource();
+                account.Profile.Client = loginResponse.GameProfiles.Client ?? new AccountClientProfile();
+                account.Profile.Server = loginResponse.GameProfiles.Server ?? new AccountServerProfile();
+                account = Storage.Accounts.Get(request.UserId);
+            }
+            catch (Exception ex)
+            {
+                switch (ex.InnerException)
+                {
+                    case ApiResponseException apiEx:
+                        RpcErrorResponse errorMessage;
+                        try
                         {
-                            case 401: // Account does not have a valid discord link
-                            case 403: // Banned Account
-                            case 404: // Account Not Found
-                                await sender.Send(new LoginFailure(request.UserId, HttpStatusCode.Unauthorized, ex.Message));
-                                return;
-                            default:
-                                await sender.Send(new LoginFailure(request.UserId, HttpStatusCode.Unauthorized,
-                                                                   $"Unknown server error: {ex.Message}"));
-                                return;
+                            errorMessage = JsonConvert.DeserializeObject<RpcErrorResponse>(apiEx.Message);
                         }
+                        catch (Exception)
+                        {
+                            await sender.Send(new LoginFailure(request.UserId, HttpStatusCode.InternalServerError, $"Unknown Server Error"));
+                            return;
+                        }
+                        await sender.Send(new LoginFailure(request.UserId, HttpStatusCode.Unauthorized, errorMessage.Message));
+                        return;
+
                     default:
                         await sender.Send(new LoginFailure(request.UserId, HttpStatusCode.Unauthorized,
                                                                                               $"Error: {ex.Message}"));
@@ -378,7 +403,7 @@ namespace EchoRelay.Core.Server.Services.Login
             }
             //Log.Debug("Login Request Success:", loginResponse.ToJson());
             //Guid sessionGuid = SecureGuidGenerator.Generate();
-            Guid sessionGuid = loginResponse.SessionGuid;
+
 
             _userSessions.AddOrUpdate(sessionGuid, request.UserId, TimeSpan.FromDays(3000));
             sender.SetSessionData(sessionGuid);
@@ -391,10 +416,15 @@ namespace EchoRelay.Core.Server.Services.Login
             await sender.Send(new TcpConnectionUnrequireEvent());
 
             // Send login settings if we were able to obtain them.
-            if (loginResponse.LoginSettings != null)
+            if (loginSettings != null)
             {
-                await sender.Send(new LoginSettings(loginResponse.LoginSettings));
+                await sender.Send(new LoginSettings(loginSettings));
             }
+        }
+        public class RpcErrorResponse
+        {
+            public int Code { get; set; }
+            public string Message { get; set; }
         }
         /// <summary>
         /// Processes a <see cref="LoggedInUserProfileRequest"/>.
@@ -437,7 +467,7 @@ namespace EchoRelay.Core.Server.Services.Login
             AccountResource? account = Storage.Accounts.Get(request.UserId);
             if (account == null)
             {
-                Log.Error($"Failed to obtain profile for ");
+                Log.Error($"Failed to obtain profile for {request.UserId}");
                 await sender.Send(new OtherUserProfileFailure(request.UserId, HttpStatusCode.InternalServerError,
                     "Profile Error\nUnable to load your account due to a server issue."));
                 return;

@@ -209,7 +209,7 @@ namespace EchoRelay.Core.Server.Storage
                     {
                         // authenticate to the users account, if it exists
                         var deviceId = NLoginService.GetDeviceId(objectId);
-                        if (deviceId == null)
+                        if (String.IsNullOrEmpty(deviceId))
                             return default;
                         ISession userSession = await Storage.Client.AuthenticateDeviceAsync(deviceId, create: false);
                         IApiRpc data = await Storage.Client.RpcAsync(userSession, "echorelay/getaccount");
@@ -280,6 +280,8 @@ namespace EchoRelay.Core.Server.Storage
             {
                 case AccountResource:
                     var deviceId = NLoginService.GetDeviceId(resourceId);
+                    if (String.IsNullOrEmpty(deviceId))
+                        throw new Exception("Invalid device id");
                     ISession userSession = await client.AuthenticateDeviceAsync(deviceId, create: false);
                     await client.RpcAsync(userSession, "echorelay/setaccount",
                         payload: JsonConvert.SerializeObject(resource, StreamIO.JsonSerializerSettings));

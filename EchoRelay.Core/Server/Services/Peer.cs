@@ -127,13 +127,14 @@ namespace EchoRelay.Core.Server.Services
             var apiKey = context.Request.Headers.Get("X-Api-Key");
 
             // Support the X-Forwarded-For header for (multi-)proxied connections.
-            var xffHeader = context.Request.Headers.Get("X-Forwarded-For");
             var XRealIPHeader = context.Request.Headers.Get("X-Real-IP");
-           try {
+            var xffHeader = context.Request.Headers.Get("X-Forwarded-For");
+            try {
                 // Prefer the X-Forwarded-For header
                 if (!String.IsNullOrEmpty(xffHeader))
                 {
                     var proxyChain = xffHeader.Split(',').Select(s => IPAddress.Parse(s.Trim()));
+
                     // First IP is the closest client
                     Address = proxyChain.First();
 
