@@ -391,6 +391,10 @@ VOID NetGameSwitchStateHook(PVOID* pGame, EchoVR::NetGameState state)
 				SetTickRate(headlessTimeStep);
 			}
 		}
+		else if (state == EchoVR::NetGameState::LoadingGlobal || state == EchoVR::NetGameState::LoadingLevel || state == EchoVR::NetGameState::LoadingRoot || state == EchoVR::NetGameState::LoggedIn) {
+			Log(EchoVR::LogLevel::Debug, "[ECHORELAY.PATCH] Loading, Setting TPS to %llu", headlessTimeStep);
+			SetTickRate(headlessTimeStep);
+		}	
 		else {
 			Log(EchoVR::LogLevel::Debug, "[ECHORELAY.PATCH] In Menu, Setting TPS to 5");
 			SetTickRate(5);
