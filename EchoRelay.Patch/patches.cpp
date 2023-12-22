@@ -21,6 +21,10 @@ BOOL isOffline = FALSE;
 /// </summary>
 BOOL isHeadless = FALSE;
 /// <summary>
+/// A CLI argument flag used to remove the extra console being added by -headless for running servers on fully headless system.
+/// </summary>
+BOOL noConsole = FALSE;
+/// <summary>
 /// A CLI argument flag indicating whether the game is booting in a windowed mode, rather than with a VR headset.
 /// </summary>
 BOOL isWindowed = FALSE;
@@ -109,25 +113,28 @@ VOID WriteLogHook(EchoVR::LogLevel logLevel, UINT64 unk, const CHAR* format, va_
     else if (!strcmp(format, "[NETGAME] No screen stats info for game mode %s")) // noisy in social lobby
         return;
 
+    // Calling the original function and returning here if noConsole is set to avoid putting any extra formatting in the logs.
+    if (noConsole) return EchoVR::WriteLog(logLevel, unk, format, vl);
+    
     // Print the ANSI color code prefix for the given log level.
     switch (logLevel)
     {
-        case EchoVR::LogLevel::Debug:
-            printf("\u001B[36m");
-            break;
+    case EchoVR::LogLevel::Debug:
+        printf("\u001B[36m");
+        break;
 
-        case EchoVR::LogLevel::Warning:
-            printf("\u001B[33m");
-            break;
+    case EchoVR::LogLevel::Warning:
+        printf("\u001B[33m");
+        break;
 
-        case EchoVR::LogLevel::Error:
-            printf("\u001B[31m");
-            break;
+    case EchoVR::LogLevel::Error:
+        printf("\u001B[31m");
+        break;
 
-        case EchoVR::LogLevel::Info:
-        default:
-            printf("\u001B[0m");
-            break;
+    case EchoVR::LogLevel::Info:
+    default:
+        printf("\u001B[0m");
+        break;
     }
 
     // Print the output to our allocated console.
@@ -136,6 +143,7 @@ VOID WriteLogHook(EchoVR::LogLevel logLevel, UINT64 unk, const CHAR* format, va_
 
     // Print the ANSI color code for restoring the default text style.
     printf("\u001B[0m");
+    
 
     // Call the original method
     EchoVR::WriteLog(logLevel, unk, format, vl);
@@ -166,6 +174,32 @@ VOID PatchEnableHeadless(PVOID pGame)
     UINT32* flags = (UINT32*)((CHAR*)pGame + 468);
     *flags &= 0xFFFFFFFD; // clear second bit
 
+    // Install our hook to capture logs to the console.
+    PatchDetour(&(PVOID&)EchoVR::WriteLog, WriteLogHook);
+
+    // Patch the engine initialization/configuration to skip initialization of the rendering providers.
+    BYTE pbPatch[] = {
+        0xA8, 0x00 // TEST al, 0 (replaces a test against 1, to skip the renderer initialization).
+    };
+    ProcessMemcpy(EchoVR::g_GameBaseAddress + 0xFF581, pbPatch, sizeof(pbPatch));
+
+    // Patch effects resource loading to be skipped over.
+    BYTE pbPatch2[] = {
+        0xEB, 0x41 // JMP 0x43
+    };
+    ProcessMemcpy(EchoVR::g_GameBaseAddress + 0x62CA91, pbPatch2, sizeof(pbPatch2));
+
+    // If a timestep is set as non-zero, patch to enable `-fixedtimestep`.
+    if (headlessTimeStep != 0)
+    {
+        // Set the flag for `-fixedtimestep`.
+        UINT64* flags = (UINT64*)((CHAR*)pGame + 2088);
+        *flags |= 0x2000000;
+    }
+
+    // Return to avoid the creation of the console when noConsole is set.
+    if (noConsole) return;
+
     // Create a console
     // Note: We do this because attaching to the parent process console would already be detached due to /SUBSYSTEM:WINDOWS.
     // Attaching two processes to a console at once would be messy and.
@@ -189,29 +223,6 @@ VOID PatchEnableHeadless(PVOID pGame)
     GetConsoleMode(hStdErr, &consoleMode);
     consoleMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING | DISABLE_NEWLINE_AUTO_RETURN;
     SetConsoleMode(hStdErr, consoleMode);
-
-    // Install our hook to capture logs to the console.
-    PatchDetour(&(PVOID&)EchoVR::WriteLog, WriteLogHook);
-
-    // Patch the engine initialization/configuration to skip initialization of the rendering providers.
-    BYTE pbPatch[] = {
-        0xA8, 0x00 // TEST al, 0 (replaces a test against 1, to skip the renderer initialization).
-    };
-    ProcessMemcpy(EchoVR::g_GameBaseAddress + 0xFF581, pbPatch, sizeof(pbPatch));
-
-    // Patch effects resource loading to be skipped over.
-    BYTE pbPatch2[] = {
-        0xEB, 0x41 // JMP 0x43
-    };
-    ProcessMemcpy(EchoVR::g_GameBaseAddress + 0x62CA91, pbPatch2, sizeof(pbPatch2));
-
-    // If a timestep is set as non-zero, patch to enable `-fixedtimestep`.
-    if (headlessTimeStep != 0)
-    {
-        // Set the flag for `-fixedtimestep`.
-        UINT64* flags = (UINT64*)((CHAR*)pGame + 2088);
-        *flags |= 0x2000000;
-    }
 }
 
 /// <summary>
@@ -381,6 +392,9 @@ UINT64 BuildCmdLineSyntaxDefinitionsHook(PVOID pGame, PVOID pArgSyntax)
     EchoVR::AddArgSyntax(pArgSyntax, "-timestep", 1, 1, FALSE);
     EchoVR::AddArgHelpString(pArgSyntax, "-timestep", "[EchoRelay] Sets the fixed update interval when using -headless (in ticks/updates per second). 0 = no fixed time step, 120 = default");
 
+    EchoVR::AddArgSyntax(pArgSyntax, "-noconsole", 0, 0, FALSE);
+    EchoVR::AddArgHelpString(pArgSyntax, "-noconsole", "[EchoRelay] Disable the creation of a new console window when using -headless");
+
     return result;
 }
 
@@ -399,6 +413,8 @@ UINT64 PreprocessCommandLineHook(PVOID pGame)
             isServer = TRUE;
         else if (lstrcmpW(argv[i], L"-offline") == 0)
             isOffline = TRUE;
+        else if (lstrcmpW(argv[i], L"-noconsole") == 0)
+            noConsole = TRUE;
         else if (lstrcmpW(argv[i], L"-headless") == 0)
             isHeadless = TRUE;
         else if (lstrcmpW(argv[i], L"-windowed") == 0)
@@ -418,6 +434,9 @@ UINT64 PreprocessCommandLineHook(PVOID pGame)
     // Verify server and offline flags are not enabled.
     if (isServer && isOffline)
         FatalError("-server and -offline arguments cannot be provided at the same time.", NULL);
+
+    if (!isHeadless && noConsole)
+        FatalError("-noConsole can only be used with the -headless argument.", NULL);
 
     // If offline flag was provided, enable offline.
     if (isOffline)
