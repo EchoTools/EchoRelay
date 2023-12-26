@@ -295,7 +295,7 @@ namespace EchoRelay.Core.Server.Services.Login
             [JsonProperty("nk_device_auth_token")]
             public string DeviceIdToken { get; set; } = "";
 
-            [JsonProperty("echo_session_guid")]
+            [JsonProperty("echo_session_token")]
             public Guid SessionGuid { get; set; } = Guid.Empty;
 
             [JsonProperty("nk_session_token")]
