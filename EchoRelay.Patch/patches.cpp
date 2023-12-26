@@ -436,7 +436,7 @@ UINT64 PreprocessCommandLineHook(PVOID pGame)
         FatalError("-server and -offline arguments cannot be provided at the same time.", NULL);
 
     if (!isHeadless && noConsole)
-        FatalError("-noConsole can only be used with the -headless argument.", NULL);
+        FatalError("-noconsole can only be used with the -headless argument.", NULL);
 
     // If offline flag was provided, enable offline.
     if (isOffline)
