@@ -145,8 +145,8 @@ namespace EchoRelay.Core.Server.Storage.Types
 
             Profile.Server.Developer ??= new AccountServerProfile.DeveloperSettings
             {
-                DisableAfkTimeout = true, // prevent kicking of "no ovr" (demo) users.
-                XPlatformId = AccountIdentifier.ToString() // enables developer mode to allow other options
+                DisableAfkTimeout = false, // prevent kicking of "no ovr" (demo) users.
+                XPlatformId = null // enables developer mode to allow other options
             };
 
             Profile.Client.Social = new AccountClientProfile.SocialSettings
