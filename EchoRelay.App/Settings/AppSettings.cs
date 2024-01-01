@@ -72,13 +72,30 @@ namespace EchoRelay.App.Settings
         [JsonProperty("serverdb_validate_servers_timeout_ms")]
         public int? ServerDBValidateGameServersTimeout { get; set; }
 
-
         /// <summary>
         /// Indicates whether the matching service should first prioritize populating game servers until full, or ping.
         /// </summary>
         [JsonProperty("matching_population_over_ping")]
         public bool MatchingPopulationOverPing { get; set; }
 
+        /// <summary>
+        /// How long after a game session starts should the matching service continue to match to it.
+        /// </summary>
+        [JsonProperty("max_session_age_matching_ms")]
+        public int? MaxSessionAgeMatchingMs { get; set; } = null;
+
+        [JsonIgnore]
+        public TimeSpan? MaxSessionAgeMatching
+        {
+                get
+                {
+                        if (MaxSessionAgeMatchingMs == null)
+                        {
+                                return null;
+                        }
+                        return TimeSpan.FromMilliseconds((double)MaxSessionAgeMatchingMs);
+                }
+        }
 
         /// <summary>
         /// Indicates whether the matching service should force a match with any available session if it could not match.

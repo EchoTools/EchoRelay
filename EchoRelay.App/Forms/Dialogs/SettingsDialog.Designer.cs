@@ -46,6 +46,8 @@
             groupBoxMatching = new GroupBox();
             chkForceIntoAnySession = new CheckBox();
             chkPopulationOverPing = new CheckBox();
+            chkMaxSessionAgeMatching = new CheckBox();
+            numMaxSessionAgeMatchingMs = new NumericUpDown();
             groupBox1 = new GroupBox();
             numValidateGameServersTimeout = new NumericUpDown();
             chkValidateGameServers = new CheckBox();
@@ -56,6 +58,7 @@
             groupBoxServer.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)numericTCPPort).BeginInit();
             groupBoxMatching.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)numMaxSessionAgeMatchingMs).BeginInit();
             groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)numValidateGameServersTimeout).BeginInit();
             SuspendLayout();
@@ -216,7 +219,7 @@
             // btnSaveSettings
             // 
             btnSaveSettings.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            btnSaveSettings.Location = new Point(12, 392);
+            btnSaveSettings.Location = new Point(12, 415);
             btnSaveSettings.Name = "btnSaveSettings";
             btnSaveSettings.Size = new Size(500, 23);
             btnSaveSettings.TabIndex = 6;
@@ -229,13 +232,40 @@
             groupBoxMatching.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             groupBoxMatching.Controls.Add(chkForceIntoAnySession);
             groupBoxMatching.Controls.Add(chkPopulationOverPing);
+            groupBoxMatching.Controls.Add(chkMaxSessionAgeMatching);
+            groupBoxMatching.Controls.Add(numMaxSessionAgeMatchingMs);
             groupBoxMatching.Location = new Point(12, 309);
             groupBoxMatching.Name = "groupBoxMatching";
-            groupBoxMatching.Size = new Size(500, 79);
+            groupBoxMatching.Size = new Size(500, 102);
             groupBoxMatching.TabIndex = 7;
             groupBoxMatching.TabStop = false;
             groupBoxMatching.Text = "Matching Settings";
             // 
+            // chkMaxSessionAgeMatching
+            //
+            chkMaxSessionAgeMatching.AutoSize = true;
+            chkMaxSessionAgeMatching.Checked = false;
+            chkMaxSessionAgeMatching.CheckState = CheckState.Unchecked;
+            chkMaxSessionAgeMatching.Location = new Point(6, 70);
+            chkMaxSessionAgeMatching.Name = "chkMaxSessionAgeMatching";
+            chkMaxSessionAgeMatching.Size = new Size(160, 23);
+            chkMaxSessionAgeMatching.TabIndex = 2;
+            chkMaxSessionAgeMatching.Text = "Only match sessions newer than (ms):";
+            chkMaxSessionAgeMatching.UseVisualStyleBackColor = true;
+            chkMaxSessionAgeMatching.CheckedChanged += chkMaxSessionAgeMatching_CheckedChanged;
+            //
+            // numMaxSessionAgeMatchingMs
+            //
+            numMaxSessionAgeMatchingMs.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            numMaxSessionAgeMatchingMs.Location = new Point(270, 70);
+            numMaxSessionAgeMatchingMs.Maximum = new decimal(new int[] { int.MaxValue, 0, 0, 0 });
+            numMaxSessionAgeMatchingMs.Minimum = new decimal(new int[] { 0, 0, 0, 0 });
+            numMaxSessionAgeMatchingMs.Name = "numMaxSessionAgeMatchingMs";
+            numMaxSessionAgeMatchingMs.Size = new Size(160, 23);
+            numMaxSessionAgeMatchingMs.TabIndex = 3;
+            numMaxSessionAgeMatchingMs.Value = new decimal(new int[] { 0, 0, 0, 0 });
+            numMaxSessionAgeMatchingMs.Enabled = false;
+            //
             // chkForceIntoAnySession
             // 
             chkForceIntoAnySession.AutoSize = true;
@@ -336,7 +366,7 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(524, 423);
+            ClientSize = new Size(524, 446);
             Controls.Add(groupBox1);
             Controls.Add(groupBoxMatching);
             Controls.Add(btnSaveSettings);
@@ -352,6 +382,7 @@
             ((System.ComponentModel.ISupportInitialize)numericTCPPort).EndInit();
             groupBoxMatching.ResumeLayout(false);
             groupBoxMatching.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)numMaxSessionAgeMatchingMs).EndInit();
             groupBox1.ResumeLayout(false);
             groupBox1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)numValidateGameServersTimeout).EndInit();
@@ -377,6 +408,8 @@
         private GroupBox groupBoxMatching;
         private CheckBox chkForceIntoAnySession;
         private CheckBox chkPopulationOverPing;
+        private CheckBox chkMaxSessionAgeMatching;
+        private NumericUpDown numMaxSessionAgeMatchingMs;
         private CheckBox chkStartServerOnStartup;
         private GroupBox groupBox1;
         private TextBox txtServerDBApiKey;

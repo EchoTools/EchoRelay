@@ -94,6 +94,23 @@ namespace EchoRelay.Core.Server.Services.Matching
             await ProcessMatchingSession(sender, request.Session, request.UserId);
         }
 
+        private TimeSpan GetMaxSessionAge(long? gameTypeSymbol)
+        {
+            if (gameTypeSymbol == null)
+            {
+                return TimeSpan.MaxValue;
+            }
+
+            var gameTypeName = Server.SymbolCache.GetName(gameTypeSymbol.Value);
+            if ((gameTypeName?.EndsWith("_private", StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (gameTypeName?.StartsWith("social", StringComparison.OrdinalIgnoreCase) ?? false))
+            {
+                return TimeSpan.MaxValue;
+            }
+
+            return Server.Settings.MaxSessionAgeForMatching;
+        }
+
         /// <summary>
         /// Processes the underlying data derived from <see cref="LobbyFindSessionRequestv11"/>, 
         /// <see cref="LobbyFindSessionRequestv11"/>, or <see cref="LobbyJoinSessionRequestv7"/>.
@@ -187,6 +204,7 @@ namespace EchoRelay.Core.Server.Services.Matching
                 lobbyTypes: matchingSession.SearchLobbyTypes,
                 requestedTeam: matchingSession.TeamIndex,
                 unfilledServerOnly: true,
+                maxSessionAge: GetMaxSessionAge(matchingSession.GameTypeSymbol),
                 regionSymbol: matchingSession.RegionSymbol
             );
 
@@ -201,7 +219,8 @@ namespace EchoRelay.Core.Server.Services.Matching
                 locked: false,
                 lobbyTypes: matchingSession.SearchLobbyTypes,
                 requestedTeam: matchingSession.TeamIndex,
-                unfilledServerOnly: true
+                unfilledServerOnly: true,
+                maxSessionAge: GetMaxSessionAge(matchingSession.GameTypeSymbol)
             );
             }
 
@@ -295,7 +314,8 @@ namespace EchoRelay.Core.Server.Services.Matching
                     locked: false,
                     lobbyTypes: matchingSession.SearchLobbyTypes,
                     requestedTeam: matchingSession.TeamIndex,
-                    unfilledServerOnly: true
+                    unfilledServerOnly: true,
+                    maxSessionAge: GetMaxSessionAge(matchingSession.GameTypeSymbol)
                 );
 
                 // Case when pressing "New Lobby" button in the menu.

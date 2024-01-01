@@ -34,7 +34,9 @@ namespace EchoRelay.App.Forms.Dialogs
             chkPopulationOverPing.Checked = Settings.MatchingPopulationOverPing;
             chkForceIntoAnySession.Checked = Settings.MatchingForceIntoAnySessionOnFailure;
             chkValidateGameServers.Checked = Settings.ServerDBValidateGameServers ?? false;
+            chkMaxSessionAgeMatching.Checked = Settings.MaxSessionAgeMatchingMs != null;
             numValidateGameServersTimeout.Value = (int)(Settings?.ServerDBValidateGameServersTimeout ?? numValidateGameServersTimeout.Value);
+            numMaxSessionAgeMatchingMs.Value = (int)(Settings?.MaxSessionAgeMatchingMs ?? numMaxSessionAgeMatchingMs.Value);
 
             // Set the server DB api key
             txtServerDBApiKey.Text = Settings.ServerDBApiKey ?? "";
@@ -108,6 +110,13 @@ namespace EchoRelay.App.Forms.Dialogs
             Settings.ServerDBApiKey = newServerDbApiKey;
             Settings.ServerDBValidateGameServers = chkValidateGameServers.Checked;
             Settings.ServerDBValidateGameServersTimeout = (int)numValidateGameServersTimeout.Value;
+            if (chkMaxSessionAgeMatching.Checked)
+            {
+                Settings.MaxSessionAgeMatchingMs = (int)numMaxSessionAgeMatchingMs.Value;
+            } else
+            {
+                Settings.MaxSessionAgeMatchingMs = null;
+            }
             Settings.MatchingPopulationOverPing = chkPopulationOverPing.Checked;
             Settings.MatchingForceIntoAnySessionOnFailure = chkForceIntoAnySession.Checked;
 
@@ -153,6 +162,11 @@ namespace EchoRelay.App.Forms.Dialogs
         private void chkValidateGameServers_CheckedChanged(object sender, EventArgs e)
         {
             numValidateGameServersTimeout.Enabled = chkValidateGameServers.Checked;
+        }
+
+        private void chkMaxSessionAgeMatching_CheckedChanged(object sender, EventArgs e)
+        {
+            numMaxSessionAgeMatchingMs.Enabled = chkMaxSessionAgeMatching.Checked;
         }
     }
 }

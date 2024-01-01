@@ -79,9 +79,21 @@ namespace EchoRelay.Core.Server.Services.ServerDB
                 OnGameServerUnregistered?.Invoke(unregisteredGameServer);
         }
 
-        public IEnumerable<RegisteredGameServer> FilterGameServers(int? findMax = null, ulong? serverId = null, Guid? sessionId = null,
-            HashSet<(uint InternalAddr, uint ExternalAddr)>? addresses = null, ushort? port = null,
-            long? gameTypeSymbol = null, long? levelSymbol = null, Guid? channel = null, bool? locked = null, LobbyType[]? lobbyTypes = null, TeamIndex? requestedTeam = null, bool unfilledServerOnly = true, long? regionSymbol = null)
+        public IEnumerable<RegisteredGameServer> FilterGameServers(
+            int? findMax = null,
+            ulong? serverId = null,
+            Guid? sessionId = null,
+            HashSet<(uint InternalAddr, uint ExternalAddr)>? addresses = null,
+            ushort? port = null,
+            long? gameTypeSymbol = null,
+            long? levelSymbol = null,
+            Guid? channel = null,
+            bool? locked = null,
+            LobbyType[]? lobbyTypes = null,
+            TeamIndex? requestedTeam = null,
+            bool unfilledServerOnly = true,
+            TimeSpan? maxSessionAge = null,
+            long? regionSymbol = null)
         {
             // Filter through all game servers
             List<RegisteredGameServer> filteredGameServers = new List<RegisteredGameServer>();
@@ -119,6 +131,8 @@ namespace EchoRelay.Core.Server.Services.ServerDB
                     else if (unfilledServerOnly && gameServer.SessionPlayerCount >= gameServer.SessionPlayerLimits.TotalPlayerLimit)
                         continue;
                     else if (unfilledServerOnly && requestedTeam != null && !gameServer.CheckTeamAvailability(requestedTeam.Value))
+                        continue;
+                    else if (maxSessionAge.HasValue && gameServer.SessionAge >= maxSessionAge.Value)
                         continue;
                 }
 

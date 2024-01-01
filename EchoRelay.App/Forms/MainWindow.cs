@@ -116,7 +116,8 @@ namespace EchoRelay
                     serverDBValidateServerEndpoint: Settings.ServerDBValidateGameServers ?? false,
                     serverDBValidateServerEndpointTimeout: Settings.ServerDBValidateGameServersTimeout ?? 3000,
                     favorPopulationOverPing: Settings.MatchingPopulationOverPing,
-                    forceIntoAnySessionIfCreationFails: Settings.MatchingForceIntoAnySessionOnFailure
+                    forceIntoAnySessionIfCreationFails: Settings.MatchingForceIntoAnySessionOnFailure,
+                    maxSessionAgeForMatching: Settings.MaxSessionAgeMatching
                     )
                 );
             Server.OnServerStarted += Server_OnServerStarted;

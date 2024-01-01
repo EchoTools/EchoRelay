@@ -137,6 +137,20 @@ namespace EchoRelay.Core.Server.Services.ServerDB
                 return SessionId != null;
             }
         }
+        /// <summary>
+        /// When the current session was started.
+        /// </summary>
+        private DateTime SessionStartTime { get; set; }
+        /// <summary>
+        /// The age of the current session.
+        /// </summary>
+        public TimeSpan SessionAge
+        {
+            get
+            {
+                return DateTime.Now - SessionStartTime;
+            }
+        }
 
         /// <summary>
         /// The current amount of players in the server.
@@ -236,6 +250,7 @@ namespace EchoRelay.Core.Server.Services.ServerDB
 
             // Set up our session variables
             SessionId = SecureGuidGenerator.Generate();
+            SessionStartTime = DateTime.Now;
             SessionLobbyType = lobbyType;
             SessionChannel = channel;
             SessionGameTypeSymbol = gameTypeSymbol;
