@@ -34,9 +34,9 @@ namespace EchoRelay.App.Forms.Dialogs
             chkPopulationOverPing.Checked = Settings.MatchingPopulationOverPing;
             chkForceIntoAnySession.Checked = Settings.MatchingForceIntoAnySessionOnFailure;
             chkValidateGameServers.Checked = Settings.ServerDBValidateGameServers ?? false;
-            chkMaxSessionAgeMatching.Checked = Settings.MaxSessionAgeMatchingMs != null;
+            chkMaxArenaAgeMatching.Checked = Settings.MaxArenaAgeMatchingMs != null;
             numValidateGameServersTimeout.Value = (int)(Settings?.ServerDBValidateGameServersTimeout ?? numValidateGameServersTimeout.Value);
-            numMaxSessionAgeMatchingMs.Value = (int)(Settings?.MaxSessionAgeMatchingMs ?? numMaxSessionAgeMatchingMs.Value);
+            numMaxArenaAgeMatchingMs.Value = (int)(Settings?.MaxArenaAgeMatchingMs ?? numMaxArenaAgeMatchingMs.Value);
 
             // Set the server DB api key
             txtServerDBApiKey.Text = Settings.ServerDBApiKey ?? "";
@@ -110,12 +110,12 @@ namespace EchoRelay.App.Forms.Dialogs
             Settings.ServerDBApiKey = newServerDbApiKey;
             Settings.ServerDBValidateGameServers = chkValidateGameServers.Checked;
             Settings.ServerDBValidateGameServersTimeout = (int)numValidateGameServersTimeout.Value;
-            if (chkMaxSessionAgeMatching.Checked)
+            if (chkMaxArenaAgeMatching.Checked)
             {
-                Settings.MaxSessionAgeMatchingMs = (int)numMaxSessionAgeMatchingMs.Value;
+                Settings.MaxArenaAgeMatchingMs = (int)numMaxArenaAgeMatchingMs.Value;
             } else
             {
-                Settings.MaxSessionAgeMatchingMs = null;
+                Settings.MaxArenaAgeMatchingMs = null;
             }
             Settings.MatchingPopulationOverPing = chkPopulationOverPing.Checked;
             Settings.MatchingForceIntoAnySessionOnFailure = chkForceIntoAnySession.Checked;
@@ -164,9 +164,9 @@ namespace EchoRelay.App.Forms.Dialogs
             numValidateGameServersTimeout.Enabled = chkValidateGameServers.Checked;
         }
 
-        private void chkMaxSessionAgeMatching_CheckedChanged(object sender, EventArgs e)
+        private void chkMaxArenaAgeMatching_CheckedChanged(object sender, EventArgs e)
         {
-            numMaxSessionAgeMatchingMs.Enabled = chkMaxSessionAgeMatching.Checked;
+            numMaxArenaAgeMatchingMs.Enabled = chkMaxArenaAgeMatching.Checked;
         }
     }
 }

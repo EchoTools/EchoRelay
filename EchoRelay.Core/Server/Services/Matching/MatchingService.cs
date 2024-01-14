@@ -102,13 +102,14 @@ namespace EchoRelay.Core.Server.Services.Matching
             }
 
             var gameTypeName = Server.SymbolCache.GetName(gameTypeSymbol.Value);
-            if ((gameTypeName?.EndsWith("_private", StringComparison.OrdinalIgnoreCase) ?? false) ||
-                (gameTypeName?.StartsWith("social", StringComparison.OrdinalIgnoreCase) ?? false))
+            if (gameTypeName != null &&
+                gameTypeName.Contains("arena", StringComparison.OrdinalIgnoreCase) &&
+                !gameTypeName.EndsWith("_private", StringComparison.OrdinalIgnoreCase))
             {
-                return TimeSpan.MaxValue;
+                return Server.Settings.MaxArenaAgeForMatching;
             }
 
-            return Server.Settings.MaxSessionAgeForMatching;
+            return TimeSpan.MaxValue;
         }
 
         /// <summary>

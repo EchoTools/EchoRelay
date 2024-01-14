@@ -52,8 +52,8 @@ namespace EchoRelay.Cli
             [Option("lowpingmatching", Required = false, Default = false, HelpText = "prefer matches on lower ping game servers vs higher population.")]
             public bool LowPingMatching { get; set; }
 
-            [Option("max-session-age-matching-ms", Required = false, Default = null, HelpText = "do not match to sessions older than this value.")]
-            public int? MaxSessionAgeMatchingMs { get; set; }
+            [Option("max-arena-age-matching-ms", Required = false, Default = null, HelpText = "do not match to arena matches older than this value.")]
+            public int? MaxArenaAgeMatchingMs { get; set; }
 
             [Option("outputconfig", Required = false, HelpText = "specify the path to write an example 'config.json'.")]
             public string? OutputConfigPath { get; set; } = null;
@@ -143,10 +143,10 @@ namespace EchoRelay.Cli
                     InitialDeployment.PerformInitialDeployment(serverStorage, options.GameBasePath, false);
                 }
 
-                TimeSpan? maxSessionAgeForMatching = null;
-                if (options.MaxSessionAgeMatchingMs.HasValue)
+                TimeSpan? maxArenaAgeForMatching = null;
+                if (options.MaxArenaAgeMatchingMs.HasValue)
                 {
-                    maxSessionAgeForMatching = TimeSpan.FromMilliseconds(options.MaxSessionAgeMatchingMs.Value);
+                    maxArenaAgeForMatching = TimeSpan.FromMilliseconds(options.MaxArenaAgeMatchingMs.Value);
                 }
 
                 // Create a server instance
@@ -158,7 +158,7 @@ namespace EchoRelay.Cli
                         serverDBValidateServerEndpointTimeout: options.ServerDBValidateGameServersTimeout,
                         favorPopulationOverPing: !options.LowPingMatching,
                         forceIntoAnySessionIfCreationFails: options.ForceMatching,
-                        maxSessionAgeForMatching: maxSessionAgeForMatching
+                        maxArenaAgeForMatching: maxArenaAgeForMatching
                         )
                     );
 

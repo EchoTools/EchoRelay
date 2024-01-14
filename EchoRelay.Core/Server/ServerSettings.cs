@@ -81,9 +81,9 @@ namespace EchoRelay.Core.Server
         public bool FavorPopulationOverPing { get; }
 
         /// <summary>
-        /// How long after a game session starts should the matching service continue to match to it.
+        /// How long after an arena match starts should the matching service continue to match to it.
         /// </summary>
-        public TimeSpan MaxSessionAgeForMatching { get; }
+        public TimeSpan MaxArenaAgeForMatching { get; }
         #endregion
 
         #region Constructor
@@ -101,7 +101,7 @@ namespace EchoRelay.Core.Server
                 int serverDBValidateServerEndpointTimeout = 3000,
                 bool forceIntoAnySessionIfCreationFails = false,
                 bool favorPopulationOverPing = true,
-                TimeSpan? maxSessionAgeForMatching = null)
+                TimeSpan? maxArenaAgeForMatching = null)
         {
             Port = port;
             ApiServicePath = apiServicePath;
@@ -117,7 +117,7 @@ namespace EchoRelay.Core.Server
             ServerDBValidateServerEndpointTimeout = serverDBValidateServerEndpointTimeout;
             ForceIntoAnySessionIfCreationFails = forceIntoAnySessionIfCreationFails;
             FavorPopulationOverPing = favorPopulationOverPing;
-            MaxSessionAgeForMatching = maxSessionAgeForMatching ?? TimeSpan.MaxValue;
+            MaxArenaAgeForMatching = maxArenaAgeForMatching ?? TimeSpan.MaxValue;
         }
         #endregion
 

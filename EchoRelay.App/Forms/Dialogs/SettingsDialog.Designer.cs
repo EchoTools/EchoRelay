@@ -1,4 +1,4 @@
-﻿namespace EchoRelay.App.Forms.Dialogs
+namespace EchoRelay.App.Forms.Dialogs
 {
     partial class SettingsDialog
     {
@@ -46,8 +46,8 @@
             groupBoxMatching = new GroupBox();
             chkForceIntoAnySession = new CheckBox();
             chkPopulationOverPing = new CheckBox();
-            chkMaxSessionAgeMatching = new CheckBox();
-            numMaxSessionAgeMatchingMs = new NumericUpDown();
+            chkMaxArenaAgeMatching = new CheckBox();
+            numMaxArenaAgeMatchingMs = new NumericUpDown();
             groupBox1 = new GroupBox();
             numValidateGameServersTimeout = new NumericUpDown();
             chkValidateGameServers = new CheckBox();
@@ -58,7 +58,7 @@
             groupBoxServer.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)numericTCPPort).BeginInit();
             groupBoxMatching.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)numMaxSessionAgeMatchingMs).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)numMaxArenaAgeMatchingMs).BeginInit();
             groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)numValidateGameServersTimeout).BeginInit();
             SuspendLayout();
@@ -232,8 +232,8 @@
             groupBoxMatching.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             groupBoxMatching.Controls.Add(chkForceIntoAnySession);
             groupBoxMatching.Controls.Add(chkPopulationOverPing);
-            groupBoxMatching.Controls.Add(chkMaxSessionAgeMatching);
-            groupBoxMatching.Controls.Add(numMaxSessionAgeMatchingMs);
+            groupBoxMatching.Controls.Add(chkMaxArenaAgeMatching);
+            groupBoxMatching.Controls.Add(numMaxArenaAgeMatchingMs);
             groupBoxMatching.Location = new Point(12, 309);
             groupBoxMatching.Name = "groupBoxMatching";
             groupBoxMatching.Size = new Size(500, 102);
@@ -241,30 +241,30 @@
             groupBoxMatching.TabStop = false;
             groupBoxMatching.Text = "Matching Settings";
             // 
-            // chkMaxSessionAgeMatching
+            // chkMaxArenaAgeMatching
             //
-            chkMaxSessionAgeMatching.AutoSize = true;
-            chkMaxSessionAgeMatching.Checked = false;
-            chkMaxSessionAgeMatching.CheckState = CheckState.Unchecked;
-            chkMaxSessionAgeMatching.Location = new Point(6, 70);
-            chkMaxSessionAgeMatching.Name = "chkMaxSessionAgeMatching";
-            chkMaxSessionAgeMatching.Size = new Size(160, 23);
-            chkMaxSessionAgeMatching.TabIndex = 2;
-            chkMaxSessionAgeMatching.Text = "Only match sessions newer than (ms):";
-            chkMaxSessionAgeMatching.UseVisualStyleBackColor = true;
-            chkMaxSessionAgeMatching.CheckedChanged += chkMaxSessionAgeMatching_CheckedChanged;
+            chkMaxArenaAgeMatching.AutoSize = true;
+            chkMaxArenaAgeMatching.Checked = false;
+            chkMaxArenaAgeMatching.CheckState = CheckState.Unchecked;
+            chkMaxArenaAgeMatching.Location = new Point(6, 70);
+            chkMaxArenaAgeMatching.Name = "chkMaxArenaAgeMatching";
+            chkMaxArenaAgeMatching.Size = new Size(160, 23);
+            chkMaxArenaAgeMatching.TabIndex = 2;
+            chkMaxArenaAgeMatching.Text = "Only match arena matches newer than (ms):";
+            chkMaxArenaAgeMatching.UseVisualStyleBackColor = true;
+            chkMaxArenaAgeMatching.CheckedChanged += chkMaxArenaAgeMatching_CheckedChanged;
             //
-            // numMaxSessionAgeMatchingMs
+            // numMaxArenaAgeMatchingMs
             //
-            numMaxSessionAgeMatchingMs.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            numMaxSessionAgeMatchingMs.Location = new Point(270, 70);
-            numMaxSessionAgeMatchingMs.Maximum = new decimal(new int[] { int.MaxValue, 0, 0, 0 });
-            numMaxSessionAgeMatchingMs.Minimum = new decimal(new int[] { 0, 0, 0, 0 });
-            numMaxSessionAgeMatchingMs.Name = "numMaxSessionAgeMatchingMs";
-            numMaxSessionAgeMatchingMs.Size = new Size(160, 23);
-            numMaxSessionAgeMatchingMs.TabIndex = 3;
-            numMaxSessionAgeMatchingMs.Value = new decimal(new int[] { 0, 0, 0, 0 });
-            numMaxSessionAgeMatchingMs.Enabled = false;
+            numMaxArenaAgeMatchingMs.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            numMaxArenaAgeMatchingMs.Location = new Point(270, 70);
+            numMaxArenaAgeMatchingMs.Maximum = new decimal(new int[] { int.MaxValue, 0, 0, 0 });
+            numMaxArenaAgeMatchingMs.Minimum = new decimal(new int[] { 0, 0, 0, 0 });
+            numMaxArenaAgeMatchingMs.Name = "numMaxArenaAgeMatchingMs";
+            numMaxArenaAgeMatchingMs.Size = new Size(160, 23);
+            numMaxArenaAgeMatchingMs.TabIndex = 3;
+            numMaxArenaAgeMatchingMs.Value = new decimal(new int[] { 0, 0, 0, 0 });
+            numMaxArenaAgeMatchingMs.Enabled = false;
             //
             // chkForceIntoAnySession
             // 
@@ -382,7 +382,7 @@
             ((System.ComponentModel.ISupportInitialize)numericTCPPort).EndInit();
             groupBoxMatching.ResumeLayout(false);
             groupBoxMatching.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)numMaxSessionAgeMatchingMs).EndInit();
+            ((System.ComponentModel.ISupportInitialize)numMaxArenaAgeMatchingMs).EndInit();
             groupBox1.ResumeLayout(false);
             groupBox1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)numValidateGameServersTimeout).EndInit();
@@ -408,8 +408,8 @@
         private GroupBox groupBoxMatching;
         private CheckBox chkForceIntoAnySession;
         private CheckBox chkPopulationOverPing;
-        private CheckBox chkMaxSessionAgeMatching;
-        private NumericUpDown numMaxSessionAgeMatchingMs;
+        private CheckBox chkMaxArenaAgeMatching;
+        private NumericUpDown numMaxArenaAgeMatchingMs;
         private CheckBox chkStartServerOnStartup;
         private GroupBox groupBox1;
         private TextBox txtServerDBApiKey;

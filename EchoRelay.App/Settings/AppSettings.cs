@@ -79,21 +79,21 @@ namespace EchoRelay.App.Settings
         public bool MatchingPopulationOverPing { get; set; }
 
         /// <summary>
-        /// How long after a game session starts should the matching service continue to match to it.
+        /// How long after an arena match starts should the matching service continue to match to it.
         /// </summary>
-        [JsonProperty("max_session_age_matching_ms")]
-        public int? MaxSessionAgeMatchingMs { get; set; } = null;
+        [JsonProperty("max_arena_age_matching_ms")]
+        public int? MaxArenaAgeMatchingMs { get; set; } = null;
 
         [JsonIgnore]
-        public TimeSpan? MaxSessionAgeMatching
+        public TimeSpan? MaxArenaAgeMatching
         {
                 get
                 {
-                        if (MaxSessionAgeMatchingMs == null)
+                        if (MaxArenaAgeMatchingMs == null)
                         {
                                 return null;
                         }
-                        return TimeSpan.FromMilliseconds((double)MaxSessionAgeMatchingMs);
+                        return TimeSpan.FromMilliseconds((double)MaxArenaAgeMatchingMs);
                 }
         }
 
