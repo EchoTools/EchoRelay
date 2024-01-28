@@ -42,9 +42,9 @@ namespace EchoRelay.API.Public
         [JsonProperty("isPublic")]
         public bool IsPublic { get; set; }
         
-        public PublicSessionInfo(RegisteredGameServer gameServer)
+        public PublicSessionInfo(RegisteredGameServer gameServer, bool isPrivate)
         {
-            SessionId = gameServer.SessionId.ToString();
+            SessionId = isPrivate ? "" : gameServer.SessionId.ToString();
             SessionIp = gameServer.ExternalAddress.ToString();
             GameServerId = gameServer.ServerId;
             ServerAddress = gameServer.Server.PublicIPAddress?.ToString() ?? "localhost";

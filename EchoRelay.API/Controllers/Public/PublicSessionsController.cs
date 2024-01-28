@@ -28,12 +28,10 @@ namespace EchoRelay.API.Controllers.Public
                 foreach (var server in servers)
                 {
                     var gameServer = server.Value;
-                    if(gameServer.SessionLobbyType != ERGameServerStartSession.LobbyType.Private)
+                    var isPrivate = gameServer.SessionLobbyType == ERGameServerStartSession.LobbyType.Private;
+                    if (gameServer.SessionStarted)
                     {
-                        if (gameServer.SessionStarted)
-                        {
-                            publicSessions.Add(new PublicSessionInfo(gameServer));
-                        }
+                        publicSessions.Add(new PublicSessionInfo(gameServer, isPrivate));
                     }
                 }
                 Log.Debug("Returning {0} public sessions", publicSessions.Count());
